@@ -8,6 +8,10 @@ repos.tar.gz
 # mock_data: track the small PM OS dataset + KB docs; ignore only big DB binaries
 mock_data/**/*.db
 mock_data/**/*.sqlite*
+mock_data/pm_agent/live/
+credentials.json
+token.json
+.env.local
 # runtime / logs / caches
 *.log
 logs/
