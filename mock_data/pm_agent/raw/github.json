@@ -1,0 +1,433 @@
+{
+  "repository": {
+    "name": "novaworks/pm-agent",
+    "default_branch": "main",
+    "current_release_branch": "release/checkout-readiness-v1"
+  },
+  "pull_requests": [
+    {
+      "id": "PR-88",
+      "number": 88,
+      "title": "Fix mobile checkout Apple Pay return state and add idempotency key",
+      "status": "Changes Requested",
+      "branch": "fix/mobile-apple-pay-idempotency",
+      "author": "Alex Chen",
+      "created_at": "2026-06-12T16:45:00-07:00",
+      "updated_at": "2026-06-14T10:25:00-07:00",
+      "linked_jira": [
+        "JIRA-142",
+        "JIRA-151"
+      ],
+      "reviewers": [
+        {
+          "name": "Priya Shah",
+          "state": "changes_requested"
+        },
+        {
+          "name": "Maya Lee",
+          "state": "commented"
+        }
+      ],
+      "checks": [
+        {
+          "name": "unit-tests",
+          "status": "passed"
+        },
+        {
+          "name": "integration-tests",
+          "status": "failed",
+          "details": "idempotency retry test fails on timeout path"
+        },
+        {
+          "name": "lint",
+          "status": "passed"
+        },
+        {
+          "name": "mobile-e2e",
+          "status": "failed",
+          "details": "iOS Safari checkout submit remains disabled in 1/5 runs"
+        }
+      ],
+      "files_changed": [
+        "apps/web/components/checkout/SubmitButton.tsx",
+        "apps/web/hooks/useApplePayReturn.ts",
+        "backend/api/checkout.py",
+        "backend/services/idempotency.py",
+        "backend/tests/test_checkout_idempotency.py"
+      ],
+      "summary": "Attempts to fix Apple Pay return state and add idempotency key support. Still blocked by failing integration tests and reviewer concerns.",
+      "risk": "high",
+      "merge_blocked_reason": "Integration test failure and changes requested by Priya on retry semantics.",
+      "comments": [
+        {
+          "author": "Priya Shah",
+          "timestamp": "2026-06-14T09:40:00-07:00",
+          "body": "The endpoint should return the existing order when the same idempotency key is reused after timeout. Current implementation may create a second pending order."
+        },
+        {
+          "author": "Maya Lee",
+          "timestamp": "2026-06-14T10:02:00-07:00",
+          "body": "UI state reset looks better, but e2e still flakes on iOS Safari."
+        }
+      ],
+      "commits": [
+        "c7a91f2",
+        "e4b2a19",
+        "a19c3d0"
+      ]
+    },
+    {
+      "id": "PR-93",
+      "number": 93,
+      "title": "Correct tax calculation for discounted checkout totals",
+      "status": "Open",
+      "branch": "fix/discount-tax-calculation",
+      "author": "Priya Shah",
+      "created_at": "2026-06-13T13:10:00-07:00",
+      "updated_at": "2026-06-14T08:55:00-07:00",
+      "linked_jira": [
+        "JIRA-148"
+      ],
+      "reviewers": [
+        {
+          "name": "Daniel Kim",
+          "state": "approved"
+        },
+        {
+          "name": "Alex Chen",
+          "state": "pending"
+        }
+      ],
+      "checks": [
+        {
+          "name": "unit-tests",
+          "status": "failed",
+          "details": "CA percentage promo tax case failing"
+        },
+        {
+          "name": "integration-tests",
+          "status": "pending"
+        },
+        {
+          "name": "lint",
+          "status": "passed"
+        }
+      ],
+      "files_changed": [
+        "backend/services/pricing.py",
+        "backend/services/tax.py",
+        "backend/tests/test_discount_tax.py"
+      ],
+      "summary": "Updates pricing pipeline so tax uses discounted subtotal. Unit test still failing for CA percentage discount case.",
+      "risk": "medium",
+      "merge_blocked_reason": "Unit test failure and one pending reviewer.",
+      "comments": [
+        {
+          "author": "Daniel Kim",
+          "timestamp": "2026-06-13T17:20:00-07:00",
+          "body": "Logic is directionally right. Please fix CA promo case before merge."
+        }
+      ],
+      "commits": [
+        "f4d2c08",
+        "19bc0a3"
+      ]
+    },
+    {
+      "id": "PR-94",
+      "number": 94,
+      "title": "Add recoverable error state for failed payment intent",
+      "status": "Draft",
+      "branch": "ui/failed-payment-error-state",
+      "author": "Maya Lee",
+      "created_at": "2026-06-13T18:14:00-07:00",
+      "updated_at": "2026-06-14T09:05:00-07:00",
+      "linked_jira": [
+        "JIRA-167"
+      ],
+      "reviewers": [],
+      "checks": [
+        {
+          "name": "unit-tests",
+          "status": "pending"
+        },
+        {
+          "name": "storybook",
+          "status": "passed"
+        }
+      ],
+      "files_changed": [
+        "apps/web/components/checkout/PaymentErrorState.tsx",
+        "apps/web/components/checkout/CheckoutPage.tsx"
+      ],
+      "summary": "Adds visible retry state when payment intent fails. Not a hard launch blocker if P0s are resolved.",
+      "risk": "low",
+      "merge_blocked_reason": "Draft PR; needs tests before review.",
+      "comments": [],
+      "commits": [
+        "72ac8f0"
+      ]
+    },
+    {
+      "id": "PR-85",
+      "number": 85,
+      "title": "Generate PM launch readiness brief from local workspace memory",
+      "status": "Merged",
+      "branch": "feature/launch-brief",
+      "author": "Jiawen Zhang",
+      "created_at": "2026-06-11T12:12:00-07:00",
+      "updated_at": "2026-06-13T21:00:00-07:00",
+      "merged_at": "2026-06-13T21:00:00-07:00",
+      "linked_jira": [
+        "JIRA-173"
+      ],
+      "reviewers": [
+        {
+          "name": "Alex Chen",
+          "state": "approved"
+        },
+        {
+          "name": "Maya Lee",
+          "state": "approved"
+        }
+      ],
+      "checks": [
+        {
+          "name": "unit-tests",
+          "status": "passed"
+        },
+        {
+          "name": "rag-smoke-test",
+          "status": "passed"
+        },
+        {
+          "name": "lint",
+          "status": "passed"
+        }
+      ],
+      "files_changed": [
+        "backend/brief_agent.py",
+        "backend/retriever.py",
+        "apps/web/components/LaunchBrief.tsx"
+      ],
+      "summary": "Core demo feature. Generates decision, confidence, reasons, evidence, and recommended actions from Jira/GitHub/customer/docs context.",
+      "risk": "low",
+      "merge_blocked_reason": null,
+      "comments": [
+        {
+          "author": "Priya Shah",
+          "timestamp": "2026-06-13T20:43:00-07:00",
+          "body": "This is the main demo. Make the output feel like an executive decision, not a search result."
+        }
+      ],
+      "commits": [
+        "8f2db10",
+        "94bb25e",
+        "0bd7a11"
+      ]
+    },
+    {
+      "id": "PR-81",
+      "number": 81,
+      "title": "Ingest Jira, GitHub, customers, and product docs into Chroma",
+      "status": "Merged",
+      "branch": "feature/workspace-ingestion",
+      "author": "Alex Chen",
+      "created_at": "2026-06-10T09:30:00-07:00",
+      "updated_at": "2026-06-12T18:00:00-07:00",
+      "merged_at": "2026-06-12T18:00:00-07:00",
+      "linked_jira": [
+        "JIRA-173"
+      ],
+      "reviewers": [
+        {
+          "name": "Jiawen Zhang",
+          "state": "approved"
+        }
+      ],
+      "checks": [
+        {
+          "name": "unit-tests",
+          "status": "passed"
+        },
+        {
+          "name": "embedding-smoke-test",
+          "status": "passed"
+        },
+        {
+          "name": "lint",
+          "status": "passed"
+        }
+      ],
+      "files_changed": [
+        "backend/ingest.py",
+        "backend/memory.py",
+        "backend/schemas.py"
+      ],
+      "summary": "Adds local ingestion pipeline for fake workspace data. Supports metadata filters by project, source, priority, customer, Jira key, and PR id.",
+      "risk": "low",
+      "merge_blocked_reason": null,
+      "comments": [],
+      "commits": [
+        "d41e9b2",
+        "52ca710"
+      ]
+    },
+    {
+      "id": "PR-92",
+      "number": 92,
+      "title": "Backend idempotency service for order creation",
+      "status": "Open",
+      "branch": "backend/idempotency-service",
+      "author": "Alex Chen",
+      "created_at": "2026-06-13T08:40:00-07:00",
+      "updated_at": "2026-06-14T09:44:00-07:00",
+      "linked_jira": [
+        "JIRA-151"
+      ],
+      "reviewers": [
+        {
+          "name": "Priya Shah",
+          "state": "changes_requested"
+        }
+      ],
+      "checks": [
+        {
+          "name": "unit-tests",
+          "status": "passed"
+        },
+        {
+          "name": "integration-tests",
+          "status": "failed",
+          "details": "duplicate idempotency key with payment timeout returns 500"
+        }
+      ],
+      "files_changed": [
+        "backend/services/idempotency.py",
+        "backend/db/migrations/20260613_idempotency_keys.sql",
+        "backend/tests/test_idempotency.py"
+      ],
+      "summary": "Adds idempotency persistence but still fails payment timeout path.",
+      "risk": "high",
+      "merge_blocked_reason": "Integration test failure and reviewer changes requested.",
+      "comments": [
+        {
+          "author": "Priya Shah",
+          "timestamp": "2026-06-14T09:48:00-07:00",
+          "body": "This blocks PR-88 and the launch readiness decision."
+        }
+      ],
+      "commits": [
+        "a19c3d0"
+      ]
+    }
+  ],
+  "commits": [
+    {
+      "sha": "c7a91f2",
+      "message": "Reset checkout submit state after Apple Pay return",
+      "author": "Alex Chen",
+      "timestamp": "2026-06-12T17:05:00-07:00",
+      "linked_pr": "PR-88",
+      "linked_jira": [
+        "JIRA-142"
+      ],
+      "files": [
+        "apps/web/hooks/useApplePayReturn.ts"
+      ]
+    },
+    {
+      "sha": "e4b2a19",
+      "message": "Add mobile checkout e2e coverage for wallet return",
+      "author": "Alex Chen",
+      "timestamp": "2026-06-13T09:20:00-07:00",
+      "linked_pr": "PR-88",
+      "linked_jira": [
+        "JIRA-142"
+      ],
+      "files": [
+        "apps/web/tests/mobile_checkout.spec.ts"
+      ]
+    },
+    {
+      "sha": "a19c3d0",
+      "message": "Persist idempotency keys for checkout order creation",
+      "author": "Alex Chen",
+      "timestamp": "2026-06-13T11:15:00-07:00",
+      "linked_pr": "PR-92",
+      "linked_jira": [
+        "JIRA-151"
+      ],
+      "files": [
+        "backend/services/idempotency.py",
+        "backend/db/migrations/20260613_idempotency_keys.sql"
+      ]
+    },
+    {
+      "sha": "f4d2c08",
+      "message": "Apply promo discount before tax calculation",
+      "author": "Priya Shah",
+      "timestamp": "2026-06-13T13:42:00-07:00",
+      "linked_pr": "PR-93",
+      "linked_jira": [
+        "JIRA-148"
+      ],
+      "files": [
+        "backend/services/pricing.py",
+        "backend/services/tax.py"
+      ]
+    },
+    {
+      "sha": "19bc0a3",
+      "message": "Add tax regression tests for fixed amount promo code",
+      "author": "Priya Shah",
+      "timestamp": "2026-06-13T14:18:00-07:00",
+      "linked_pr": "PR-93",
+      "linked_jira": [
+        "JIRA-148"
+      ],
+      "files": [
+        "backend/tests/test_discount_tax.py"
+      ]
+    },
+    {
+      "sha": "8f2db10",
+      "message": "Generate launch readiness brief with source evidence",
+      "author": "Jiawen Zhang",
+      "timestamp": "2026-06-12T20:15:00-07:00",
+      "linked_pr": "PR-85",
+      "linked_jira": [
+        "JIRA-173"
+      ],
+      "files": [
+        "backend/brief_agent.py"
+      ]
+    },
+    {
+      "sha": "94bb25e",
+      "message": "Render executive launch recommendation in dashboard",
+      "author": "Jiawen Zhang",
+      "timestamp": "2026-06-13T16:44:00-07:00",
+      "linked_pr": "PR-85",
+      "linked_jira": [
+        "JIRA-173"
+      ],
+      "files": [
+        "apps/web/components/LaunchBrief.tsx"
+      ]
+    },
+    {
+      "sha": "72ac8f0",
+      "message": "Add payment failure retry UI state",
+      "author": "Maya Lee",
+      "timestamp": "2026-06-14T08:52:00-07:00",
+      "linked_pr": "PR-94",
+      "linked_jira": [
+        "JIRA-167"
+      ],
+      "files": [
+        "apps/web/components/checkout/PaymentErrorState.tsx"
+      ]
+    }
+  ]
+}

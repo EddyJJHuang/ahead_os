@@ -1,0 +1,38 @@
+[
+  {
+    "id": "email_001",
+    "type": "email",
+    "timestamp": "2026-06-12T09:15:00",
+    "from": "priya@dellnvidia.dev",
+    "to": ["jiawen@novaworks.ai"],
+    "subject": "Hackathon environment and agent runtime notes",
+    "body": "For the Dell x NVIDIA hackathon, teams will have access to the provided agent environment. You do not need to install OpenClaw or NemoClaw before arrival. Focus on building a modular product architecture where the model layer, agent runtime, and tool execution layer can be swapped during the hackathon.",
+    "project": "BriefOS",
+    "tags": ["dell", "nvidia", "openclaw", "nemotron", "openshell"],
+    "importance": "high"
+  },
+  {
+    "id": "email_002",
+    "type": "email",
+    "timestamp": "2026-06-12T10:40:00",
+    "from": "alex@novaworks.ai",
+    "to": ["jiawen@novaworks.ai"],
+    "subject": "Chroma ingestion status",
+    "body": "I finished the first version of the ingestion script for emails, Slack messages, tasks, and notes. The current blocker is that meeting prep sometimes retrieves unrelated task items. We may need better metadata filters by project, date, and participant.",
+    "project": "BriefOS",
+    "tags": ["chroma", "retrieval", "backend", "blocker"],
+    "importance": "medium"
+  },
+  {
+    "id": "email_003",
+    "type": "email",
+    "timestamp": "2026-06-12T13:20:00",
+    "from": "daniel@arcstudio.ai",
+    "to": ["jiawen@novaworks.ai"],
+    "subject": "Use case feedback: local chief of staff",
+    "body": "The most compelling part of BriefOS is that it can summarize sensitive workspace context locally. For founders, the value is not another chatbot, but a system that remembers investor conversations, customer asks, calendar context, and open follow-ups.",
+    "project": "BriefOS",
+    "tags": ["customer-feedback", "privacy", "local-ai", "chief-of-staff"],
+    "importance": "high"
+  }
+]

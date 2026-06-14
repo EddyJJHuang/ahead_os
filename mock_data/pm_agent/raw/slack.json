@@ -1,0 +1,42 @@
+[
+  {
+    "id": "slack_001",
+    "type": "slack",
+    "timestamp": "2026-06-12T08:50:00",
+    "channel": "#briefos",
+    "sender": "jiawen",
+    "text": "Main goal today: get daily brief and meeting prep working end to end. UI can be simple, but the demo flow has to be stable.",
+    "project": "BriefOS",
+    "tags": ["daily-brief", "meeting-prep", "demo"]
+  },
+  {
+    "id": "slack_002",
+    "type": "slack",
+    "timestamp": "2026-06-12T11:05:00",
+    "channel": "#backend",
+    "sender": "alex",
+    "text": "Chroma search works, but we need to chunk notes better. Right now long notes bury important action items.",
+    "project": "BriefOS",
+    "tags": ["chroma", "chunking", "retrieval"]
+  },
+  {
+    "id": "slack_003",
+    "type": "slack",
+    "timestamp": "2026-06-12T14:30:00",
+    "channel": "#design",
+    "sender": "maya",
+    "text": "Dashboard v0 is ready: left sidebar for sources, center panel for daily brief, right panel for action items and follow-up draft.",
+    "project": "BriefOS",
+    "tags": ["ui", "dashboard", "follow-up"]
+  },
+  {
+    "id": "slack_004",
+    "type": "slack",
+    "timestamp": "2026-06-12T15:10:00",
+    "channel": "#briefos",
+    "sender": "jiawen",
+    "text": "For the pitch, we should say: most copilots wait for questions, but BriefOS proactively prepares decisions, meetings, and follow-ups from private workspace memory.",
+    "project": "BriefOS",
+    "tags": ["pitch", "positioning", "local-ai"]
+  }
+]
