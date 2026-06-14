@@ -6,6 +6,7 @@ exposes three capabilities the hackathon demo needs:
 
 * ``text_to_sql(question)``     — translate NL → SQL → run against ``company.db``
 * ``rag_search(query)``         — retrieve top-k chunks from the pre-built faiss index
+* ``pm_rag_search(query)``      — retrieve PM launch-readiness chunks
 * ``chat_with_tools(question)`` — multi-turn with OpenAI-style tool calling,
   plus a ReAct fallback for when the vLLM tool parser doesn't fire
 
@@ -64,6 +65,8 @@ MOCK_BASE_URL = os.environ.get("MOCK_BASE_URL", "http://localhost:8088")
 DB_PATH = SSD_ROOT / "mock_data" / "analytics_agent" / "company.db"
 RAG_INDEX_PATH = SSD_ROOT / "rag_index.faiss"
 RAG_CHUNKS_PATH = SSD_ROOT / "rag_chunks.json"
+PM_RAG_INDEX_PATH = SSD_ROOT / "pm_rag_index.faiss"
+PM_RAG_CHUNKS_PATH = SSD_ROOT / "pm_rag_chunks.json"
 
 client = OpenAI(base_url=OPENAI_BASE_URL, api_key=OPENAI_API_KEY)
 
@@ -216,6 +219,98 @@ def rag_search(query: str, k: int = 3) -> list[dict]:
             }
         )
     return hits
+
+
+def _load_pm_rag_index():
+    """Lazy-load PM FAISS index + chunk metadata."""
+    if not PM_RAG_INDEX_PATH.exists() or not PM_RAG_CHUNKS_PATH.exists():
+        return None
+    try:
+        import faiss  # type: ignore[import-untyped]
+    except ImportError:
+        return None
+    index = faiss.read_index(str(PM_RAG_INDEX_PATH))
+    payload = json.loads(PM_RAG_CHUNKS_PATH.read_text())
+    return index, payload["chunks"], payload["meta"]
+
+
+def pm_rag_search(query: str, k: int = 8) -> list[dict]:
+    """Return top PM launch-readiness chunks for ``query``."""
+    loaded = _load_pm_rag_index()
+    if not loaded:
+        return [
+            {
+                "error": (
+                    "PM RAG index not found. Run build_pm_index.py first "
+                    f"(expected {PM_RAG_INDEX_PATH})."
+                )
+            }
+        ]
+    index, chunks, meta = loaded
+    qv = _embed_query(query).astype("float32")
+    distances, indices = index.search(qv, k)
+    hits: list[dict] = []
+    for rank, (idx, score) in enumerate(zip(indices[0], distances[0])):
+        if idx < 0:
+            continue
+        hits.append(
+            {
+                "rank": rank + 1,
+                "score": float(score),
+                "source": meta[idx].get("source"),
+                "chunk_index": meta[idx].get("chunk_index"),
+                "text": chunks[idx],
+            }
+        )
+    return hits
+
+
+PM_LAUNCH_READINESS_SYSTEM = """
+You are a senior product operations partner for a local AI launch-readiness demo.
+Use only the provided PM context to make a launch recommendation.
+
+Return a concise brief with:
+- Decision: Go, Conditional Go, or Hold
+- Top blockers
+- Customer impact
+- Immediate next actions with owners when known
+- Stakeholder update
+
+Be explicit when evidence is missing. Do not invent Jira, GitHub, or customer facts.
+"""
+
+
+def pm_launch_readiness(question: str) -> dict:
+    """Retrieve PM context and ask the local model for a launch recommendation."""
+    hits = pm_rag_search(question, k=8)
+    if hits and "error" in hits[0]:
+        return {"error": hits[0]["error"], "sources": hits}
+
+    context = "\n\n".join(
+        (
+            f"[{hit['rank']}] source={hit.get('source')} "
+            f"chunk={hit.get('chunk_index')}\n{hit.get('text', '')}"
+        )
+        for hit in hits
+    )
+    messages = [
+        {"role": "system", "content": PM_LAUNCH_READINESS_SYSTEM},
+        {
+            "role": "user",
+            "content": (
+                f"Question: {question}\n\n"
+                f"Retrieved PM context:\n{context}\n\n"
+                "Make the launch recommendation."
+            ),
+        },
+    ]
+    resp = client.chat.completions.create(
+        model=MODEL_ID,
+        messages=messages,
+        max_tokens=900,
+    )
+    answer = resp.choices[0].message.content or ""
+    return {"answer": answer, "sources": hits}
 
 
 # ---------------------------------------------------------------------------

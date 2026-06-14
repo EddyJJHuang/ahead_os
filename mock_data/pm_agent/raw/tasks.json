@@ -1,0 +1,50 @@
+[
+  {
+    "id": "task_001",
+    "type": "task",
+    "title": "Finish workspace data ingestion",
+    "description": "Load emails, Slack messages, calendar events, tasks, and notes into Chroma with metadata.",
+    "owner": "alex",
+    "status": "in_progress",
+    "due": "2026-06-12T17:00:00",
+    "project": "BriefOS",
+    "priority": "high",
+    "tags": ["backend", "chroma", "ingestion"]
+  },
+  {
+    "id": "task_002",
+    "type": "task",
+    "title": "Build Daily Brief API",
+    "description": "Create FastAPI endpoint that retrieves today's relevant context and generates a structured daily brief.",
+    "owner": "jiawen",
+    "status": "todo",
+    "due": "2026-06-12T18:00:00",
+    "project": "BriefOS",
+    "priority": "high",
+    "tags": ["fastapi", "daily-brief", "agent"]
+  },
+  {
+    "id": "task_003",
+    "type": "task",
+    "title": "Prepare 90-second pitch",
+    "description": "Explain BriefOS as a local-first AI chief of staff for private workspace memory, designed to run on Dell and NVIDIA agent infrastructure.",
+    "owner": "jiawen",
+    "status": "todo",
+    "due": "2026-06-12T21:00:00",
+    "project": "BriefOS",
+    "priority": "medium",
+    "tags": ["pitch", "dell", "nvidia", "local-ai"]
+  },
+  {
+    "id": "task_004",
+    "type": "task",
+    "title": "Polish dashboard UI",
+    "description": "Create simple dashboard with daily brief, upcoming meetings, risks, and suggested follow-ups.",
+    "owner": "maya",
+    "status": "in_progress",
+    "due": "2026-06-12T20:00:00",
+    "project": "BriefOS",
+    "priority": "medium",
+    "tags": ["ui", "nextjs", "dashboard"]
+  }
+]

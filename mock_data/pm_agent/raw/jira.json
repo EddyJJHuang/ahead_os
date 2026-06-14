@@ -1,0 +1,494 @@
+{
+  "project": {
+    "name": "PM Agent",
+    "product_area": "AI product management copilot",
+    "release": "Checkout Launch Readiness v1",
+    "launch_date_target": "2026-06-17",
+    "current_date": "2026-06-14",
+    "timezone": "America/Los_Angeles"
+  },
+  "issues": [
+    {
+      "id": "jira_142",
+      "key": "JIRA-142",
+      "type": "Bug",
+      "title": "Mobile checkout submit button freezes after Apple Pay authorization",
+      "status": "In Progress",
+      "priority": "P0",
+      "severity": "Blocker",
+      "component": "mobile-checkout",
+      "assignee": "Alex Chen",
+      "reporter": "Maya Lee",
+      "created_at": "2026-06-12T09:18:00-07:00",
+      "updated_at": "2026-06-14T10:34:00-07:00",
+      "due_date": "2026-06-14",
+      "sprint": "Launch Sprint 24",
+      "labels": [
+        "checkout-launch",
+        "mobile",
+        "apple-pay",
+        "release-blocker"
+      ],
+      "description": "On iOS Safari, the checkout submit button becomes unresponsive after Apple Pay authorization returns to the checkout page. User sees no confirmation and may retry payment.",
+      "repro_steps": [
+        "Open checkout on iOS Safari",
+        "Select Apple Pay",
+        "Authorize payment",
+        "Return to checkout screen",
+        "Tap Submit Order"
+      ],
+      "expected_behavior": "Submit Order triggers order creation within 2 seconds and navigates to confirmation page.",
+      "actual_behavior": "Submit Order button remains disabled. No order is created. No error is shown.",
+      "acceptance_criteria": [
+        "iOS Safari Apple Pay checkout succeeds in staging",
+        "Button state resets correctly after wallet authorization",
+        "Order creation idempotency prevents duplicate charge attempts",
+        "QA signs off on iPhone 14, iPhone 15, and iPhone SE test matrix"
+      ],
+      "linked_prs": [
+        "PR-88"
+      ],
+      "linked_commits": [
+        "c7a91f2",
+        "e4b2a19"
+      ],
+      "blocked_by": [
+        "JIRA-151"
+      ],
+      "blocks": [
+        "JIRA-160",
+        "JIRA-167"
+      ],
+      "customer_impact": [
+        {
+          "customer_id": "cust_acme",
+          "impact": "Enterprise pilot blocked"
+        },
+        {
+          "customer_id": "cust_omnicart",
+          "impact": "Mobile conversion test cannot start"
+        }
+      ],
+      "business_impact": {
+        "estimated_revenue_at_risk": 180000,
+        "impact_window": "This week",
+        "risk_note": "Acme cannot start enterprise pilot until mobile checkout works on iOS."
+      },
+      "launch_criteria_blocker": true,
+      "evidence": [
+        "Sentry event checkout.mobile.applepay.button_frozen increased from 0 to 47 events in staging",
+        "QA video uploaded by Maya on 2026-06-13",
+        "PR-88 still in Changes Requested"
+      ],
+      "comments": [
+        {
+          "author": "Maya Lee",
+          "timestamp": "2026-06-13T15:42:00-07:00",
+          "body": "Reproduced on iPhone 15 Pro and iPhone SE. This should block launch."
+        },
+        {
+          "author": "Alex Chen",
+          "timestamp": "2026-06-14T09:21:00-07:00",
+          "body": "Fix is in PR-88, but review found idempotency edge case when users double-tap after wallet return."
+        }
+      ]
+    },
+    {
+      "id": "jira_148",
+      "key": "JIRA-148",
+      "type": "Bug",
+      "title": "Promo code discount not reflected in final tax calculation",
+      "status": "To Do",
+      "priority": "P0",
+      "severity": "Critical",
+      "component": "pricing",
+      "assignee": "Priya Shah",
+      "reporter": "Daniel Kim",
+      "created_at": "2026-06-12T11:04:00-07:00",
+      "updated_at": "2026-06-14T08:02:00-07:00",
+      "due_date": "2026-06-15",
+      "sprint": "Launch Sprint 24",
+      "labels": [
+        "checkout-launch",
+        "pricing",
+        "tax",
+        "release-blocker"
+      ],
+      "description": "When a user applies a percentage promo code, the displayed subtotal updates but tax calculation still uses the pre-discount subtotal.",
+      "acceptance_criteria": [
+        "Tax calculation uses discounted subtotal",
+        "Order summary and payment intent amount match",
+        "Regression test added for percentage and fixed promo codes"
+      ],
+      "linked_prs": [
+        "PR-93"
+      ],
+      "linked_commits": [],
+      "blocked_by": [],
+      "blocks": [
+        "JIRA-160"
+      ],
+      "customer_impact": [
+        {
+          "customer_id": "cust_beta_bio",
+          "impact": "Launch campaign uses promo code WELCOME20"
+        }
+      ],
+      "business_impact": {
+        "estimated_revenue_at_risk": 45000,
+        "impact_window": "Launch week",
+        "risk_note": "Incorrect tax could trigger support tickets and refund requests."
+      },
+      "launch_criteria_blocker": true,
+      "evidence": [
+        "Unit test added in PR-93 fails for CA tax case",
+        "Customer launch campaign depends on promo code"
+      ],
+      "comments": [
+        {
+          "author": "Daniel Kim",
+          "timestamp": "2026-06-13T12:35:00-07:00",
+          "body": "This is a compliance and customer trust issue. Please keep P0."
+        }
+      ]
+    },
+    {
+      "id": "jira_151",
+      "key": "JIRA-151",
+      "type": "Task",
+      "title": "Add idempotency key to checkout order creation endpoint",
+      "status": "Changes Requested",
+      "priority": "P0",
+      "severity": "Critical",
+      "component": "checkout-api",
+      "assignee": "Alex Chen",
+      "reporter": "Jiawen Zhang",
+      "created_at": "2026-06-12T14:18:00-07:00",
+      "updated_at": "2026-06-14T10:11:00-07:00",
+      "due_date": "2026-06-14",
+      "sprint": "Launch Sprint 24",
+      "labels": [
+        "checkout-launch",
+        "backend",
+        "idempotency",
+        "release-blocker"
+      ],
+      "description": "Order creation endpoint needs idempotency support before mobile checkout can be released. Required to prevent duplicate orders or duplicate payment captures when users retry.",
+      "acceptance_criteria": [
+        "Client sends idempotency_key for each checkout attempt",
+        "Server returns previous order for duplicate idempotency_key",
+        "Payment provider capture is not retried for completed order",
+        "Integration tests cover retry and timeout scenarios"
+      ],
+      "linked_prs": [
+        "PR-88",
+        "PR-92"
+      ],
+      "linked_commits": [
+        "a19c3d0"
+      ],
+      "blocked_by": [],
+      "blocks": [
+        "JIRA-142"
+      ],
+      "customer_impact": [
+        {
+          "customer_id": "cust_acme",
+          "impact": "Required for enterprise pilot risk approval"
+        }
+      ],
+      "business_impact": {
+        "estimated_revenue_at_risk": 180000,
+        "impact_window": "This week",
+        "risk_note": "Without idempotency, checkout launch violates launch criteria."
+      },
+      "launch_criteria_blocker": true,
+      "evidence": [
+        "PR-88 code review requested changes on idempotency behavior",
+        "Product docs require zero duplicate charge risk for launch"
+      ],
+      "comments": [
+        {
+          "author": "Priya Shah",
+          "timestamp": "2026-06-14T09:56:00-07:00",
+          "body": "Do not ship mobile checkout until this is merged and QA verified."
+        }
+      ]
+    },
+    {
+      "id": "jira_160",
+      "key": "JIRA-160",
+      "type": "Release",
+      "title": "Checkout Launch Readiness decision",
+      "status": "Blocked",
+      "priority": "P0",
+      "severity": "Blocker",
+      "component": "release",
+      "assignee": "Jiawen Zhang",
+      "reporter": "Priya Shah",
+      "created_at": "2026-06-13T08:00:00-07:00",
+      "updated_at": "2026-06-14T10:46:00-07:00",
+      "due_date": "2026-06-14",
+      "sprint": "Launch Sprint 24",
+      "labels": [
+        "checkout-launch",
+        "release-decision",
+        "exec-brief"
+      ],
+      "description": "PM needs to make final launch readiness recommendation for mobile checkout.",
+      "acceptance_criteria": [
+        "All P0 issues closed",
+        "QA review scheduled and completed",
+        "Enterprise pilot account unblocked",
+        "Launch checklist completed",
+        "Rollback owner assigned"
+      ],
+      "linked_prs": [
+        "PR-88",
+        "PR-93"
+      ],
+      "linked_commits": [],
+      "blocked_by": [
+        "JIRA-142",
+        "JIRA-148",
+        "JIRA-151",
+        "JIRA-166"
+      ],
+      "blocks": [],
+      "customer_impact": [
+        {
+          "customer_id": "cust_acme",
+          "impact": "Pilot cannot proceed"
+        },
+        {
+          "customer_id": "cust_beta_bio",
+          "impact": "Launch campaign at risk"
+        }
+      ],
+      "business_impact": {
+        "estimated_revenue_at_risk": 225000,
+        "impact_window": "Next 7 days",
+        "risk_note": "Launch should be delayed 2 days unless all blockers resolve by EOD."
+      },
+      "launch_criteria_blocker": true,
+      "evidence": [
+        "3 P0 blockers remain open",
+        "QA review missing",
+        "PR-88 in Changes Requested",
+        "Acme escalation unresolved"
+      ],
+      "comments": [
+        {
+          "author": "Jiawen Zhang",
+          "timestamp": "2026-06-14T10:44:00-07:00",
+          "body": "PM Agent should recommend launch delay unless QA review is scheduled and PR-88 is approved."
+        }
+      ]
+    },
+    {
+      "id": "jira_166",
+      "key": "JIRA-166",
+      "type": "Task",
+      "title": "Schedule QA review for mobile checkout launch",
+      "status": "Blocked",
+      "priority": "P0",
+      "severity": "Critical",
+      "component": "qa",
+      "assignee": "Unassigned",
+      "reporter": "Maya Lee",
+      "created_at": "2026-06-13T09:22:00-07:00",
+      "updated_at": "2026-06-14T07:48:00-07:00",
+      "due_date": "2026-06-14",
+      "sprint": "Launch Sprint 24",
+      "labels": [
+        "qa",
+        "launch-checklist",
+        "release-blocker"
+      ],
+      "description": "Final QA review is required for checkout launch but no reviewer has accepted the calendar invite.",
+      "acceptance_criteria": [
+        "QA owner assigned",
+        "iOS Safari, Android Chrome, desktop Chrome test matrix completed",
+        "Regression report attached to release ticket"
+      ],
+      "linked_prs": [],
+      "linked_commits": [],
+      "blocked_by": [],
+      "blocks": [
+        "JIRA-160"
+      ],
+      "customer_impact": [
+        {
+          "customer_id": "cust_acme",
+          "impact": "Pilot risk review cannot be completed without QA sign-off"
+        }
+      ],
+      "business_impact": {
+        "estimated_revenue_at_risk": 180000,
+        "impact_window": "This week",
+        "risk_note": "QA sign-off is mandatory launch criterion."
+      },
+      "launch_criteria_blocker": true,
+      "evidence": [
+        "Calendar invite has no accepted QA reviewer",
+        "Launch checklist still marks QA review incomplete"
+      ],
+      "comments": [
+        {
+          "author": "Maya Lee",
+          "timestamp": "2026-06-14T07:48:00-07:00",
+          "body": "I can help test, but we need an official QA owner."
+        }
+      ]
+    },
+    {
+      "id": "jira_167",
+      "key": "JIRA-167",
+      "type": "Bug",
+      "title": "Checkout loading spinner continues after failed payment intent",
+      "status": "To Do",
+      "priority": "P1",
+      "severity": "Major",
+      "component": "checkout-ui",
+      "assignee": "Maya Lee",
+      "reporter": "Jiawen Zhang",
+      "created_at": "2026-06-13T10:18:00-07:00",
+      "updated_at": "2026-06-13T18:09:00-07:00",
+      "due_date": "2026-06-16",
+      "sprint": "Launch Sprint 24",
+      "labels": [
+        "checkout-launch",
+        "ui",
+        "error-state"
+      ],
+      "description": "If payment provider returns a failed intent, checkout UI sometimes keeps spinner visible instead of showing recoverable error.",
+      "acceptance_criteria": [
+        "Failed payment intent shows recoverable error state",
+        "User can retry payment without refreshing page",
+        "Telemetry event emitted for failed intent"
+      ],
+      "linked_prs": [
+        "PR-94"
+      ],
+      "linked_commits": [],
+      "blocked_by": [
+        "JIRA-142"
+      ],
+      "blocks": [],
+      "customer_impact": [
+        {
+          "customer_id": "cust_omnicart",
+          "impact": "May affect A/B test quality"
+        }
+      ],
+      "business_impact": {
+        "estimated_revenue_at_risk": 25000,
+        "impact_window": "Launch week",
+        "risk_note": "Not a hard launch blocker if JIRA-142 and JIRA-151 are fixed."
+      },
+      "launch_criteria_blocker": false,
+      "evidence": [
+        "Observed 8 times in staging replay sessions"
+      ],
+      "comments": []
+    },
+    {
+      "id": "jira_173",
+      "key": "JIRA-173",
+      "type": "Story",
+      "title": "PM Agent generates launch readiness summary from Jira, GitHub, customers, and docs",
+      "status": "Done",
+      "priority": "P1",
+      "severity": "Normal",
+      "component": "pm-agent",
+      "assignee": "Jiawen Zhang",
+      "reporter": "Jiawen Zhang",
+      "created_at": "2026-06-10T13:00:00-07:00",
+      "updated_at": "2026-06-13T21:12:00-07:00",
+      "due_date": "2026-06-13",
+      "sprint": "Hackathon Prep",
+      "labels": [
+        "pm-agent",
+        "briefing",
+        "rag"
+      ],
+      "description": "PM Agent should combine engineering status, product criteria, and customer impact into one launch recommendation.",
+      "acceptance_criteria": [
+        "Reads Jira blockers",
+        "Reads GitHub PR status",
+        "Reads customer impact",
+        "Reads launch criteria from product_docs.md",
+        "Outputs decision, confidence, reasons, and recommended actions"
+      ],
+      "linked_prs": [
+        "PR-81",
+        "PR-85"
+      ],
+      "linked_commits": [
+        "8f2db10",
+        "94bb25e"
+      ],
+      "blocked_by": [],
+      "blocks": [],
+      "customer_impact": [],
+      "business_impact": {
+        "estimated_revenue_at_risk": 0,
+        "impact_window": "Demo",
+        "risk_note": "Core hackathon demo feature."
+      },
+      "launch_criteria_blocker": false,
+      "evidence": [
+        "Local demo returns SHIP READINESS: NO for checkout launch"
+      ],
+      "comments": [
+        {
+          "author": "Priya Shah",
+          "timestamp": "2026-06-13T20:00:00-07:00",
+          "body": "This is the clearest demo moment. Keep it as one giant answer, not a dashboard of cards."
+        }
+      ]
+    },
+    {
+      "id": "jira_176",
+      "key": "JIRA-176",
+      "type": "Task",
+      "title": "Replace cloud LLM adapter with local Nemotron adapter at hackathon",
+      "status": "To Do",
+      "priority": "P2",
+      "severity": "Normal",
+      "component": "ai-runtime",
+      "assignee": "Alex Chen",
+      "reporter": "Jiawen Zhang",
+      "created_at": "2026-06-14T08:30:00-07:00",
+      "updated_at": "2026-06-14T08:30:00-07:00",
+      "due_date": "2026-06-15",
+      "sprint": "Hackathon Prep",
+      "labels": [
+        "nemotron",
+        "adapter",
+        "local-ai"
+      ],
+      "description": "Current LLM adapter supports Ollama/OpenAI. At hackathon, replace model implementation with local Nemotron endpoint while keeping PM Agent logic unchanged.",
+      "acceptance_criteria": [
+        "LLMClient interface unchanged",
+        "Nemotron adapter passes daily brief smoke test",
+        "Fallback adapter available if local model endpoint is unavailable"
+      ],
+      "linked_prs": [],
+      "linked_commits": [],
+      "blocked_by": [],
+      "blocks": [],
+      "customer_impact": [],
+      "business_impact": {
+        "estimated_revenue_at_risk": 0,
+        "impact_window": "Hackathon",
+        "risk_note": "Sponsor integration demo point."
+      },
+      "launch_criteria_blocker": false,
+      "evidence": [
+        "Architecture isolates LLM provider behind llm/base.py"
+      ],
+      "comments": []
+    }
+  ]
+}

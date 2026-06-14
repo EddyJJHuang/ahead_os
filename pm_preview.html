@@ -1,0 +1,316 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ahead OS PM Agent</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #171717;
+      --muted: #646464;
+      --line: #d9d9d9;
+      --paper: #fbfaf7;
+      --panel: #ffffff;
+      --accent: #0f766e;
+      --accent-2: #b91c1c;
+      --soft: #e7f3f1;
+      --warn: #fff2cc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+    }
+    header {
+      border-bottom: 1px solid var(--line);
+      background: var(--panel);
+    }
+    .bar {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 18px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+    }
+    h1 {
+      font-size: 20px;
+      line-height: 1.2;
+      margin: 0;
+      font-weight: 720;
+      letter-spacing: 0;
+    }
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+    main {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 22px;
+    }
+    section {
+      min-width: 0;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+    }
+    label {
+      display: block;
+      font-size: 13px;
+      font-weight: 650;
+      margin-bottom: 8px;
+    }
+    textarea {
+      width: 100%;
+      min-height: 154px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      font: inherit;
+      line-height: 1.45;
+      color: var(--ink);
+      background: #fff;
+    }
+    button {
+      width: 100%;
+      height: 42px;
+      margin-top: 12px;
+      border: 0;
+      border-radius: 8px;
+      background: var(--accent);
+      color: white;
+      font-weight: 720;
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: .62;
+      cursor: wait;
+    }
+    .hint {
+      margin-top: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+    .decision {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 16px;
+    }
+    .decision h2 {
+      margin: 0;
+      font-size: 18px;
+      letter-spacing: 0;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 78px;
+      height: 32px;
+      padding: 0 12px;
+      border-radius: 999px;
+      background: var(--warn);
+      color: #7a4a00;
+      font-weight: 780;
+      font-size: 13px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 14px;
+      background: #fff;
+      min-height: 120px;
+    }
+    .card h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+    }
+    .card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: #2a2a2a;
+      line-height: 1.45;
+      font-size: 14px;
+    }
+    .brief {
+      white-space: pre-wrap;
+      line-height: 1.55;
+      font-size: 14px;
+      color: #202020;
+    }
+    .sources {
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .error {
+      border-color: #f0b4b4;
+      background: #fff7f7;
+      color: var(--accent-2);
+    }
+    @media (max-width: 820px) {
+      main { grid-template-columns: 1fr; padding: 16px; }
+      .grid { grid-template-columns: 1fr; }
+      .bar { padding: 16px; align-items: flex-start; flex-direction: column; }
+      .status { white-space: normal; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="bar">
+      <h1>Ahead OS PM Agent</h1>
+      <div class="status"><span class="dot"></span><span>Frontend API: :8100 / PM launch readiness</span></div>
+    </div>
+  </header>
+  <main>
+    <section class="panel">
+      <label for="question">Launch question</label>
+      <textarea id="question">Are we ready to launch? Summarize blockers, customer impact, next actions, and stakeholder update.</textarea>
+      <button id="run">Generate PM Brief</button>
+      <div class="hint">
+        Shows the latest sample brief now. When `pm_rag_index.faiss` exists, the button calls `/api/pm/brief`.
+      </div>
+    </section>
+    <section class="panel">
+      <div class="decision">
+        <h2>Launch Readiness Brief</h2>
+        <span class="pill" id="decision">HOLD</span>
+      </div>
+      <div class="grid">
+        <div class="card">
+          <h3>Top Blockers</h3>
+          <ul id="blockers">
+            <li>Mobile checkout Apple Pay flow remains P0; PR-88 has changes requested and failing e2e.</li>
+            <li>Duplicate charge risk is not verified; idempotency retry behavior is still blocked.</li>
+            <li>Promo code tax calculation and QA launch review are not signed off.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Customer Impact</h3>
+          <ul id="impact">
+            <li>Acme Commerce enterprise pilot is blocked; $180K ARR is at risk.</li>
+            <li>BetaBio's WELCOME20 launch campaign depends on correct promo tax behavior.</li>
+            <li>OmniCart cannot start the mobile conversion A/B test until iOS checkout is stable.</li>
+          </ul>
+        </div>
+      </div>
+      <div class="card" style="margin-top: 14px;">
+        <h3>Generated Brief</h3>
+        <div class="brief" id="brief">SHIP READINESS: NO
+Confidence: 92%
+
+Reason:
+Mobile checkout remains blocked by multiple P0 issues. PR-88 is still in Changes Requested, idempotency is not verified, and QA review is not scheduled. Acme Commerce cannot proceed with its $180K enterprise pilot until the mobile checkout flow is fixed and QA signs off.
+
+Why is launch at risk?
+
+1. Mobile checkout broken
+   Evidence: JIRA-142 and PR-88.
+
+2. Duplicate charge risk remains
+   Evidence: JIRA-151 and PR-92.
+
+3. Promo code tax calculation is not verified
+   Evidence: JIRA-148 and PR-93.
+
+4. Enterprise pilot blocked
+   Evidence: Acme escalation and $180K ARR at risk.
+
+5. QA review missing
+   Evidence: JIRA-166 and launch criteria require QA sign-off.
+
+Recommended actions:
+1. Assign QA owner before EOD.
+2. Fix PR-88 and PR-92 idempotency retry behavior.
+3. Fix PR-93 tax test failure.
+4. Send Acme a revised pilot timeline.
+5. Re-run PM Agent readiness after P0s and QA are resolved.</div>
+      </div>
+      <div class="sources" id="sources">Sample preview from current PM workspace context.</div>
+    </section>
+  </main>
+  <script>
+    const run = document.getElementById("run");
+    const question = document.getElementById("question");
+    const brief = document.getElementById("brief");
+    const sources = document.getElementById("sources");
+    const decision = document.getElementById("decision");
+
+    function inferDecision(text) {
+      const upper = text.toUpperCase();
+      if (upper.includes("CONDITIONAL GO")) return "CONDITIONAL";
+      if (upper.includes("HOLD")) return "HOLD";
+      if (upper.includes("GO")) return "GO";
+      return "BRIEF";
+    }
+
+    run.addEventListener("click", async () => {
+      run.disabled = true;
+      run.textContent = "Generating...";
+      brief.textContent = "Calling /api/pm/brief...";
+      sources.textContent = "";
+      try {
+        const res = await fetch("/api/pm/brief", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify({question: question.value})
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          brief.textContent = data.detail || data.error || "Request failed.";
+          brief.parentElement.classList.add("error");
+          decision.textContent = "NEEDS INDEX";
+          return;
+        }
+        brief.parentElement.classList.remove("error");
+        brief.textContent = data.answer || "";
+        decision.textContent = inferDecision(data.answer || "");
+        const src = (data.sources || []).map(s => `${s.rank}. ${s.source} #${s.chunk_index}`).join("\n");
+        sources.textContent = src ? `Sources:\n${src}` : "No sources returned.";
+      } catch (err) {
+        brief.textContent = String(err);
+        brief.parentElement.classList.add("error");
+        decision.textContent = "ERROR";
+      } finally {
+        run.disabled = false;
+        run.textContent = "Generate PM Brief";
+      }
+    });
+  </script>
+</body>
+</html>

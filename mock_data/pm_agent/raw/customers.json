@@ -1,0 +1,193 @@
+{
+  "accounts": [
+    {
+      "id": "cust_acme",
+      "name": "Acme Commerce",
+      "segment": "Enterprise",
+      "arr": 180000,
+      "stage": "Pilot",
+      "health": "At Risk",
+      "owner": "Daniel Kim",
+      "contract_deadline": "2026-06-20",
+      "primary_contact": {
+        "name": "Rachel Morgan",
+        "title": "VP Operations",
+        "email": "rachel.morgan@acmecommerce.example"
+      },
+      "use_case": "Acme wants to roll out mobile checkout to 40 regional storefronts after pilot approval.",
+      "success_criteria": [
+        "Mobile checkout works on iOS Safari",
+        "No duplicate charge risk",
+        "QA sign-off shared before pilot start"
+      ],
+      "linked_jira": [
+        "JIRA-142",
+        "JIRA-151",
+        "JIRA-160",
+        "JIRA-166"
+      ],
+      "linked_prs": [
+        "PR-88",
+        "PR-92"
+      ],
+      "urgency": "Critical",
+      "revenue_at_risk": 180000
+    },
+    {
+      "id": "cust_beta_bio",
+      "name": "BetaBio Labs",
+      "segment": "Mid-Market",
+      "arr": 45000,
+      "stage": "Launch Campaign",
+      "health": "Caution",
+      "owner": "Jiawen Zhang",
+      "contract_deadline": "2026-06-24",
+      "primary_contact": {
+        "name": "Nina Patel",
+        "title": "Growth Lead",
+        "email": "nina.patel@betabio.example"
+      },
+      "use_case": "BetaBio plans to launch a WELCOME20 promo campaign tied to checkout release.",
+      "success_criteria": [
+        "Promo code WELCOME20 calculates correct subtotal and tax",
+        "Order summary matches payment amount",
+        "Customer support macro ready for launch"
+      ],
+      "linked_jira": [
+        "JIRA-148",
+        "JIRA-160"
+      ],
+      "linked_prs": [
+        "PR-93"
+      ],
+      "urgency": "High",
+      "revenue_at_risk": 45000
+    },
+    {
+      "id": "cust_omnicart",
+      "name": "OmniCart",
+      "segment": "Growth",
+      "arr": 25000,
+      "stage": "A/B Test",
+      "health": "Caution",
+      "owner": "Maya Lee",
+      "contract_deadline": "2026-06-28",
+      "primary_contact": {
+        "name": "Leo Grant",
+        "title": "Product Manager",
+        "email": "leo.grant@omnicart.example"
+      },
+      "use_case": "OmniCart wants to run a mobile checkout conversion A/B test after launch.",
+      "success_criteria": [
+        "Recoverable payment failure state",
+        "Clean funnel analytics",
+        "Mobile web conversion tracking enabled"
+      ],
+      "linked_jira": [
+        "JIRA-142",
+        "JIRA-167"
+      ],
+      "linked_prs": [
+        "PR-88",
+        "PR-94"
+      ],
+      "urgency": "Medium",
+      "revenue_at_risk": 25000
+    },
+    {
+      "id": "cust_northstar",
+      "name": "Northstar Retail",
+      "segment": "Enterprise",
+      "arr": 120000,
+      "stage": "Discovery",
+      "health": "Healthy",
+      "owner": "Daniel Kim",
+      "contract_deadline": "2026-07-15",
+      "primary_contact": {
+        "name": "Erin Cho",
+        "title": "Director of Digital",
+        "email": "erin.cho@northstar.example"
+      },
+      "use_case": "Interested in PM Agent's launch readiness summaries for internal product teams.",
+      "success_criteria": [
+        "Demo can show launch risk across Jira, GitHub, and customer impact",
+        "Agent cites evidence",
+        "Local-first deployment story is clear"
+      ],
+      "linked_jira": [
+        "JIRA-173"
+      ],
+      "linked_prs": [
+        "PR-85"
+      ],
+      "urgency": "Low",
+      "revenue_at_risk": 0
+    }
+  ],
+  "escalations": [
+    {
+      "id": "esc_001",
+      "customer_id": "cust_acme",
+      "timestamp": "2026-06-14T07:30:00-07:00",
+      "source": "customer_email",
+      "severity": "Critical",
+      "subject": "Acme pilot cannot proceed until mobile checkout is stable",
+      "body": "We cannot approve the enterprise pilot while iOS checkout is failing and there is still duplicate charge risk. Please send a clear launch decision and QA sign-off by Tuesday morning.",
+      "linked_jira": [
+        "JIRA-142",
+        "JIRA-151",
+        "JIRA-166",
+        "JIRA-160"
+      ],
+      "linked_prs": [
+        "PR-88",
+        "PR-92"
+      ],
+      "requested_action": "Delay launch or provide verified fix and QA sign-off.",
+      "business_impact": "Blocks $180K enterprise pilot."
+    },
+    {
+      "id": "esc_002",
+      "customer_id": "cust_beta_bio",
+      "timestamp": "2026-06-13T16:05:00-07:00",
+      "source": "slack_connect",
+      "severity": "High",
+      "subject": "Promo campaign depends on correct tax calculation",
+      "body": "Our WELCOME20 launch campaign is scheduled for next week. We need confirmation that discounts and tax calculations are correct before enabling checkout traffic.",
+      "linked_jira": [
+        "JIRA-148",
+        "JIRA-160"
+      ],
+      "linked_prs": [
+        "PR-93"
+      ],
+      "requested_action": "Confirm tax calculation fix and share test evidence.",
+      "business_impact": "Risks $45K launch campaign."
+    },
+    {
+      "id": "esc_003",
+      "customer_id": "cust_omnicart",
+      "timestamp": "2026-06-13T11:45:00-07:00",
+      "source": "customer_call",
+      "severity": "Medium",
+      "subject": "Mobile checkout A/B test needs reliable error states",
+      "body": "If failed payments show a spinner forever, conversion data will be noisy. This is not a launch blocker for us, but we need a timeline.",
+      "linked_jira": [
+        "JIRA-167"
+      ],
+      "linked_prs": [
+        "PR-94"
+      ],
+      "requested_action": "Share ETA for recoverable payment failure state.",
+      "business_impact": "May delay $25K A/B test."
+    }
+  ],
+  "customer_impact_summary": {
+    "total_revenue_at_risk": 250000,
+    "critical_accounts": [
+      "Acme Commerce"
+    ],
+    "highest_urgency_issue": "JIRA-142",
+    "recommended_customer_message": "We recommend delaying checkout launch by 2 days to complete P0 fixes and QA sign-off. We will provide Acme with a verified fix status and updated pilot timeline by Tuesday morning."
+  }
+}

@@ -144,7 +144,11 @@ def config():
         "model_id": agent.MODEL_ID,
         "openai_base_url": agent.OPENAI_BASE_URL,
         "mock_base_url": agent.MOCK_BASE_URL,
-        "capabilities": ["chat", "sql", "rag"],
+        "capabilities": ["chat", "sql", "rag", "pm_agent", "pm_rag", "pm_brief"],
+        "indexes": {
+            "ops_rag": str(agent.RAG_INDEX_PATH),
+            "pm_rag": str(agent.PM_RAG_INDEX_PATH),
+        },
         "tools": [t["function"]["name"] for t in agent.TOOLS],
     }
 
@@ -319,6 +323,15 @@ class PMDraftRequest(BaseModel):
     context: str = Field(..., description="Evidence/summary the draft should be based on (e.g. an action's `context`).")
 
 
+class PMRagRequest(BaseModel):
+    query: str = Field(..., examples=["Should we launch checkout readiness v1?"])
+    k: int = 8
+
+
+class PMBriefRequest(BaseModel):
+    question: str = Field(..., examples=["Are we ready to launch? Summarize blockers and next actions."])
+
+
 @app.post("/api/pm/analysis", tags=["pm-os"])
 def pm_analysis():
     """Run PM Analysis — the triage workflow. Returns ship-readiness, executive
@@ -331,6 +344,18 @@ def pm_ask(req: PMAskRequest):
     """Ask PM OS (Panel 3). Retrieves evidence via tools, then answers. Returns
     {answer, trace} where trace is the ordered tool_call/tool_result evidence."""
     return pm_agent.ask([m.model_dump() for m in req.messages], req.max_rounds)
+
+
+@app.post("/api/pm/rag", tags=["pm-rag"])
+def pm_rag(req: PMRagRequest):
+    """Retrieve top PM launch-readiness chunks from the FAISS PM RAG index."""
+    return {"hits": agent.pm_rag_search(req.query, k=req.k)}
+
+
+@app.post("/api/pm/brief", tags=["pm-rag"])
+def pm_brief(req: PMBriefRequest):
+    """Generate a launch-readiness brief using PM FAISS RAG + local model."""
+    return agent.pm_launch_readiness(req.question)
 
 
 def _pm_stream(messages: list[dict], max_rounds: int = 1):
