@@ -1,4 +1,6 @@
-/** PM OS dashboard view models (not part of the :8100 API contract). */
+/** PM OS dashboard view models (mapped from /api/pm/* responses). */
+
+import type { DraftKind } from "./api/pm_types";
 
 export interface ExecutiveDecisionData {
   headline: string;
@@ -8,7 +10,6 @@ export interface ExecutiveDecisionData {
   evidence_strength: string;
   evidence_sources: string[];
   summary: string;
-  live_enriched?: boolean;
 }
 
 export interface ActionItem {
@@ -17,6 +18,8 @@ export interface ActionItem {
   impact: string;
   effort: string;
   rationale?: string;
+  draft_kind?: DraftKind;
+  context?: string;
 }
 
 export interface DraftContent {

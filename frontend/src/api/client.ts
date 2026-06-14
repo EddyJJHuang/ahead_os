@@ -1,14 +1,15 @@
 import type {
-  ChatRequest,
-  ChatResponse,
-  ChatStreamEvent,
-  ConfigResponse,
-  HealthResponse,
-  RagRequest,
-  RagResponse,
-  SqlRequest,
-  SqlResponse,
-} from "./types";
+  AnalysisResponse,
+  AskResponse,
+  AskStreamEvent,
+  ChatMessage,
+  DraftRequest,
+  DraftResponse,
+  SourceCounts,
+  SourceName,
+  SourceResponse,
+} from "./pm_types";
+import type { ConfigResponse, HealthResponse } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8100";
 
@@ -39,33 +40,48 @@ export async function getConfig(): Promise<ConfigResponse | null> {
   return fetchJSON<ConfigResponse>("/api/config");
 }
 
-export async function postRag(body: RagRequest): Promise<RagResponse | null> {
-  return fetchJSON<RagResponse>("/api/rag", {
+export async function postPmAnalysis(): Promise<AnalysisResponse | null> {
+  return fetchJSON<AnalysisResponse>("/api/pm/analysis", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function postPmAsk(body: {
+  messages: ChatMessage[];
+  max_rounds?: number;
+}): Promise<AskResponse | null> {
+  return fetchJSON<AskResponse>("/api/pm/ask", {
     method: "POST",
     body: JSON.stringify(body),
   });
 }
 
-export async function postSql(body: SqlRequest): Promise<SqlResponse | null> {
-  return fetchJSON<SqlResponse>("/api/sql", {
+export async function postPmDraft(
+  body: DraftRequest
+): Promise<DraftResponse | null> {
+  return fetchJSON<DraftResponse>("/api/pm/draft", {
     method: "POST",
     body: JSON.stringify(body),
   });
 }
 
-export async function postChat(body: ChatRequest): Promise<ChatResponse | null> {
-  return fetchJSON<ChatResponse>("/api/chat", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+export async function getPmSources(): Promise<SourceCounts | null> {
+  return fetchJSON<SourceCounts>("/api/pm/sources");
 }
 
-/** Stream chat via SSE (fetch + ReadableStream). */
-export async function postChatStream(
-  body: ChatRequest,
-  onEvent: (event: ChatStreamEvent) => void
+export async function getPmSource(
+  source: SourceName
+): Promise<SourceResponse | null> {
+  return fetchJSON<SourceResponse>(`/api/pm/sources/${source}`);
+}
+
+/** Stream PM ask via SSE (fetch + ReadableStream). */
+export async function postPmAskStream(
+  body: { messages: ChatMessage[]; max_rounds?: number },
+  onEvent: (event: AskStreamEvent) => void
 ): Promise<void> {
-  const res = await fetch(`${API_URL}/api/chat/stream`, {
+  const res = await fetch(`${API_URL}/api/pm/ask/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -88,7 +104,7 @@ export async function postChatStream(
     for (const frame of frames) {
       const line = frame.split("\n").find((l) => l.startsWith("data:"));
       if (line) {
-        onEvent(JSON.parse(line.slice(5).trim()) as ChatStreamEvent);
+        onEvent(JSON.parse(line.slice(5).trim()) as AskStreamEvent);
       }
     }
   }

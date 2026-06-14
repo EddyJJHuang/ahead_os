@@ -67,7 +67,12 @@ export default function App() {
             <div className="panel__title">Top 3 Actions</div>
           </header>
           <div className="panel__body">
-            {!loading && panels && <TopActions actions={panels.actions} />}
+            {!loading && panels && (
+              <TopActions
+                actions={panels.actions}
+                modelReady={panels.modelReady}
+              />
+            )}
             {loading && (
               <p className="panel-loading">Loading actions…</p>
             )}
@@ -80,7 +85,10 @@ export default function App() {
             <div className="panel__title">Ask PM OS</div>
           </header>
           <div className="panel__body panel__body--chat">
-            <AskPMOS />
+            <AskPMOS
+              backendReachable={online}
+              modelReady={panels?.modelReady ?? false}
+            />
           </div>
         </section>
 

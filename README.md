@@ -70,7 +70,7 @@ bash serve.sh          # backend :8100
 # remote GB10: VITE_API_URL=http://<GB10_LAN_IP>:8100 ./web.sh
 ```
 
-See [`START_HERE.md`](START_HERE.md) for panel details. The UI uses `:8100` chat/RAG today with demo fallbacks; wire-up to `/api/pm/*` is documented in [`FRONTEND.md`](FRONTEND.md).
+See [`START_HERE.md`](START_HERE.md) for panel details. The UI calls `/api/pm/analysis`, `/api/pm/ask/stream`, `/api/pm/draft`, and `/api/pm/sources` on `:8100`, with demo fallbacks when the backend or vLLM is unavailable.
 
 ## Demo scenario
 **Enterprise Checkout launch** (target Fri 2026-06-19). The data encodes a launch-at-risk story: 3 open P0

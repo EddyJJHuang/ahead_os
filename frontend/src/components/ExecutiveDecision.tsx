@@ -22,9 +22,6 @@ export default function ExecutiveDecision({
       {usingMock && (
         <span className="panel-badge panel-badge--demo">Demo data</span>
       )}
-      {data.live_enriched && !usingMock && (
-        <span className="panel-badge panel-badge--live">KB enriched</span>
-      )}
 
       <h2 className="executive__headline">{data.headline}</h2>
 

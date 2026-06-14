@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
-import { postChat, postChatStream } from "../api/client";
-import type { ChatMessage } from "../api/types";
+import { postPmAsk, postPmAskStream } from "../api/client";
+import type { ChatMessage } from "../api/pm_types";
 import { DEMO_CHAT_FALLBACK, DEMO_CHAT_OFFLINE } from "../mock/demoData";
 import AgentTrace from "./AgentTrace";
 
@@ -15,14 +15,22 @@ interface UiMessage {
   text: string;
 }
 
-export default function AskPMOS() {
+interface AskPMOSProps {
+  backendReachable: boolean;
+  modelReady: boolean;
+}
+
+export default function AskPMOS({
+  backendReachable,
+  modelReady,
+}: AskPMOSProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
   const [display, setDisplay] = useState<UiMessage[]>([]);
   const [traceSteps, setTraceSteps] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [streamingText, setStreamingText] = useState("");
-  const [backendLive, setBackendLive] = useState<boolean | null>(null);
+  const [usingLiveAgent, setUsingLiveAgent] = useState(false);
 
   const offlineFallback = useCallback((question: string): string => {
     const key = question.toLowerCase();
@@ -31,6 +39,14 @@ export default function AskPMOS() {
     }
     return DEMO_CHAT_OFFLINE;
   }, []);
+
+  const showDemoAnswer = (question: string) => {
+    setUsingLiveAgent(false);
+    setDisplay((prev) => [
+      ...prev,
+      { role: "assistant", text: offlineFallback(question) },
+    ]);
+  };
 
   const sendQuestion = async (question: string) => {
     if (!question.trim() || loading) return;
@@ -45,11 +61,17 @@ export default function AskPMOS() {
     setTraceSteps([]);
     setStreamingText("");
 
+    if (!backendReachable || !modelReady) {
+      showDemoAnswer(question);
+      setLoading(false);
+      return;
+    }
+
     try {
       let answer = "";
       const steps: string[] = [];
 
-      await postChatStream({ messages: nextHistory }, (event) => {
+      await postPmAskStream({ messages: nextHistory }, (event) => {
         if (event.type === "token") {
           answer += event.text;
           setStreamingText(answer);
@@ -64,25 +86,17 @@ export default function AskPMOS() {
         }
       });
 
-      setBackendLive(true);
+      setUsingLiveAgent(true);
       setDisplay((prev) => [...prev, { role: "assistant", text: answer }]);
       setHistory((prev) => [...prev, { role: "assistant", content: answer }]);
     } catch {
-      try {
-        const res = await postChat({ messages: nextHistory });
-        if (res?.answer) {
-          setBackendLive(true);
-          setDisplay((prev) => [...prev, { role: "assistant", text: res.answer }]);
-          setHistory((prev) => [...prev, { role: "assistant", content: res.answer }]);
-        } else {
-          throw new Error("offline");
-        }
-      } catch {
-        setBackendLive(false);
-        setDisplay((prev) => [
-          ...prev,
-          { role: "assistant", text: offlineFallback(question) },
-        ]);
+      const res = await postPmAsk({ messages: nextHistory });
+      if (res?.answer) {
+        setUsingLiveAgent(true);
+        setDisplay((prev) => [...prev, { role: "assistant", text: res.answer }]);
+        setHistory((prev) => [...prev, { role: "assistant", content: res.answer }]);
+      } else {
+        showDemoAnswer(question);
       }
     } finally {
       setStreamingText("");
@@ -90,18 +104,22 @@ export default function AskPMOS() {
     }
   };
 
+  const statusHint =
+    !backendReachable
+      ? "Backend offline — demo answers only."
+      : !modelReady
+        ? "Model loading — demo answers until vLLM is ready."
+        : "Live PM OS agent on :8100.";
+
   return (
     <div className="chat">
-      {backendLive === true && (
+      {usingLiveAgent && (
         <span className="chat-live-indicator">Live agent</span>
       )}
 
       <div className="chat__messages">
         {display.length === 0 && !loading && (
-          <p className="chat__hint">
-            Ask follow-ups about the launch decision. Connected to :8100 when
-            backend is up.
-          </p>
+          <p className="chat__hint">{statusHint}</p>
         )}
         {display.map((msg, i) => (
           <div

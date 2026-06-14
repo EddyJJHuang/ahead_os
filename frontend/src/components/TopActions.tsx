@@ -1,20 +1,38 @@
 import { useState } from "react";
+import { postPmDraft } from "../api/client";
 import type { ActionItem, DraftContent } from "../types";
 import { DEMO_DRAFTS } from "../mock/demoData";
 import DraftModal from "./DraftModal";
 
 interface TopActionsProps {
   actions: ActionItem[];
+  modelReady: boolean;
 }
 
-export default function TopActions({ actions }: TopActionsProps) {
+export default function TopActions({ actions, modelReady }: TopActionsProps) {
   const [draft, setDraft] = useState<DraftContent | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const handleDraft = async (action: ActionItem) => {
     setLoadingId(action.id);
-    // TODO: POST /api/draft
-    await new Promise((r) => setTimeout(r, 350));
+
+    if (modelReady && action.draft_kind && action.context) {
+      const res = await postPmDraft({
+        kind: action.draft_kind,
+        context: action.context,
+      });
+      if (res?.draft) {
+        setDraft({
+          action_id: action.id,
+          action_title: action.title,
+          subject: action.title,
+          body: res.draft,
+        });
+        setLoadingId(null);
+        return;
+      }
+    }
+
     setDraft(
       DEMO_DRAFTS[action.id] ?? {
         action_id: action.id,

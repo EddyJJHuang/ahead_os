@@ -1,7 +1,16 @@
 import { useState } from "react";
 import type { EvidenceItem } from "../types";
 
-const SOURCES = ["All", "Jira", "GitHub", "Email", "Calendar", "Tasks", "Knowledge"] as const;
+const SOURCES = [
+  "All",
+  "Jira",
+  "GitHub",
+  "Email",
+  "Slack",
+  "Calendar",
+  "Tasks",
+  "Docs",
+] as const;
 
 interface EvidenceDrawerProps {
   items: EvidenceItem[];

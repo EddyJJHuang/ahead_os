@@ -22,12 +22,12 @@ VITE_API_URL=http://<GB10_LAN_IP>:8100 ./web.sh
 
 ## 4 panels
 
-1. **Executive Decision** — demo verdict + optional KB enrichment via `/api/rag`
-2. **Top 3 Actions** — demo actions + client-side drafts
-3. **Ask PM OS** — live chat via `/api/chat/stream` (:8100), with offline mock fallback
-4. **Evidence Drawer** — live RAG hits + demo source cards
+1. **Executive Decision** — `POST /api/pm/analysis` (ship readiness + executive summary)
+2. **Top 3 Actions** — `POST /api/pm/analysis` → `POST /api/pm/draft`
+3. **Ask PM OS** — `POST /api/pm/ask/stream` when vLLM is ready; demo answers otherwise
+4. **Evidence Drawer** — risk/criteria evidence from analysis + `GET /api/pm/sources`
 
-See [`FRONTEND.md`](FRONTEND.md) for the full PM OS API contract (`/api/pm/*`). Panel wiring to those endpoints is tracked as follow-up work.
+See [`FRONTEND.md`](FRONTEND.md) for the full PM OS API contract.
 
 ## Scripts
 

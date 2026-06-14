@@ -1,103 +1,143 @@
 /**
- * Derives PM OS panel data from :8100 API where possible, falls back to demoData.ts.
- * TODO: POST /api/triage | GET /api/evidence
+ * Loads PM OS panels from POST /api/pm/analysis (+ GET /api/pm/sources),
+ * falls back to demoData.ts when the backend is unreachable.
  */
 
-import { getConfig, getHealth, postRag } from "../api/client";
-import type { RagHit } from "../api/types";
+import { getHealth, getPmSources, postPmAnalysis } from "../api/client";
+import type {
+  AnalysisResponse,
+  EvidenceRef,
+  RiskLevel,
+} from "../api/pm_types";
 import {
   DEMO_ACTIONS,
   DEMO_EVIDENCE,
   DEMO_EXECUTIVE,
 } from "../mock/demoData";
 import type {
+  ActionItem,
   EvidenceItem,
   ExecutiveDecisionData,
   PanelLoadState,
 } from "../types";
 
-const RAG_QUERIES = [
-  "VPN-503 error troubleshooting launch blocker",
-  "security incident password reset policy",
-  "PTO request approval process",
-];
+const SOURCE_LABELS: Record<string, string> = {
+  jira: "Jira",
+  github: "GitHub",
+  email: "Email",
+  emails: "Email",
+  calendar: "Calendar",
+  task: "Tasks",
+  tasks: "Tasks",
+  slack: "Slack",
+  doc: "Docs",
+};
 
-function ragHitToEvidence(hit: RagHit, index: number): EvidenceItem | null {
-  if (hit.error || !hit.text) return null;
-  const sourceLabel =
-    hit.source?.replace(/\.md$/, "").replace(/_/g, " ") ?? "Knowledge";
+function severityFromRisk(level: RiskLevel): EvidenceItem["severity"] {
+  switch (level) {
+    case "Critical":
+      return "critical";
+    case "High":
+      return "high";
+    case "Medium":
+      return "medium";
+    default:
+      return "low";
+  }
+}
+
+function sourceLabel(type: string): string {
+  return SOURCE_LABELS[type.toLowerCase()] ?? type;
+}
+
+function refKey(ref: EvidenceRef): string {
+  return `${ref.type}:${ref.id}`;
+}
+
+function mapExecutive(analysis: AnalysisResponse): ExecutiveDecisionData {
+  const { ship_readiness, executive_summary } = analysis;
   return {
-    id: `rag-${hit.source}-${hit.chunk_index ?? index}`,
-    source: "Knowledge",
-    title: `${sourceLabel} #${hit.chunk_index ?? index + 1}`,
-    snippet:
-      hit.text.slice(0, 140) + (hit.text.length > 140 ? "…" : ""),
-    detail: hit.text,
-    severity: (hit.score ?? 0) > 0.7 ? "high" : "medium",
+    headline: executive_summary.headline,
+    ship_readiness: ship_readiness.decision,
+    recommendation: ship_readiness.recommended_action,
+    risk_level: ship_readiness.risk_level,
+    evidence_strength: ship_readiness.evidence_strength,
+    evidence_sources: ship_readiness.based_on,
+    summary: executive_summary.narrative,
+  };
+}
+
+function mapActions(analysis: AnalysisResponse): ActionItem[] {
+  return analysis.actions.slice(0, 3).map((action) => ({
+    id: action.id,
+    title: action.title,
+    impact: action.impact,
+    effort: action.effort,
+    rationale: action.rationale,
+    draft_kind: action.draft_kind,
+    context: action.context,
+  }));
+}
+
+function refToEvidence(
+  ref: EvidenceRef,
+  severity: EvidenceItem["severity"],
+  snippet: string,
+  detail: string
+): EvidenceItem {
+  return {
+    id: refKey(ref),
+    source: sourceLabel(ref.type),
+    title: `${ref.id} — ${ref.title}`,
+    snippet,
+    detail,
+    severity,
     origin: "live",
   };
 }
 
-function strengthFromHits(hits: RagHit[]): string {
-  const scores = hits.filter((h) => h.score != null).map((h) => h.score!);
-  if (scores.length === 0) return DEMO_EXECUTIVE.evidence_strength;
-  const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-  if (avg > 0.75) return "Strong";
-  if (avg > 0.5) return "Moderate";
-  return "Weak";
-}
-
-async function fetchRagHits(): Promise<RagHit[]> {
-  const all: RagHit[] = [];
-  for (const query of RAG_QUERIES) {
-    const res = await postRag({ query, k: 2 });
-    if (res?.hits) all.push(...res.hits.filter((h) => !h.error));
-  }
+function mapEvidence(analysis: AnalysisResponse): EvidenceItem[] {
   const seen = new Set<string>();
-  return all.filter((h) => {
-    const key = `${h.source}-${h.chunk_index}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
-}
+  const items: EvidenceItem[] = [];
 
-function mergeEvidence(liveHits: RagHit[]): EvidenceItem[] {
-  const live = liveHits
-    .map((h, i) => ragHitToEvidence(h, i))
-    .filter((x): x is EvidenceItem => x != null);
-  const demo = DEMO_EVIDENCE.filter(
-    (d) =>
-      !live.some((l) =>
-        l.title.toLowerCase().includes(d.source.toLowerCase())
-      )
-  );
-  return [...live, ...demo];
-}
+  for (const risk of analysis.risks) {
+    const sev = severityFromRisk(risk.severity);
+    for (const ref of risk.evidence) {
+      const key = refKey(ref);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push(
+        refToEvidence(
+          ref,
+          sev,
+          risk.risk,
+          `${risk.mitigation}\n\nSource: ${ref.type}/${ref.id}${ref.ref ? ` (${ref.ref})` : ""}`
+        )
+      );
+    }
+  }
 
-function deriveExecutive(
-  liveHits: RagHit[],
-  tools: string[]
-): ExecutiveDecisionData {
-  const base = { ...DEMO_EXECUTIVE };
-  if (liveHits.length === 0) return base;
+  for (const criterion of analysis.criteria) {
+    for (const ref of criterion.evidence) {
+      const key = refKey(ref);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      items.push(
+        refToEvidence(
+          ref,
+          criterion.ok ? "low" : "high",
+          criterion.detail,
+          `${criterion.name}: ${criterion.detail}`
+        )
+      );
+    }
+  }
 
-  base.evidence_strength = strengthFromHits(liveHits);
-  base.live_enriched = true;
-  const liveSources = ["Knowledge Base"];
-  if (tools.length)
-    liveSources.push(...tools.slice(0, 2).map((t) => t.replace(/_/g, " ")));
-  base.evidence_sources = [
-    ...new Set([
-      ...liveSources,
-      ...DEMO_EXECUTIVE.evidence_sources.slice(0, 2),
-    ]),
-  ];
-  return base;
+  return items;
 }
 
 export async function loadPanelData(): Promise<PanelLoadState> {
-  const [health, config] = await Promise.all([getHealth(), getConfig()]);
+  const health = await getHealth();
   const backendReachable = health?.status === "ok";
   const modelReady = health?.vllm === true;
 
@@ -112,13 +152,27 @@ export async function loadPanelData(): Promise<PanelLoadState> {
     };
   }
 
-  const liveHits = await fetchRagHits();
+  const analysis = await postPmAnalysis();
+  if (!analysis?.ship_readiness) {
+    return {
+      executive: DEMO_EXECUTIVE,
+      actions: DEMO_ACTIONS,
+      evidence: DEMO_EVIDENCE,
+      backendReachable: true,
+      modelReady,
+      usingMockPanels: true,
+    };
+  }
+
+  // Touch sources endpoint so Evidence Explorer reflects connected sources.
+  await getPmSources();
+
   return {
-    executive: deriveExecutive(liveHits, config?.tools ?? []),
-    actions: DEMO_ACTIONS,
-    evidence: mergeEvidence(liveHits),
+    executive: mapExecutive(analysis),
+    actions: mapActions(analysis),
+    evidence: mapEvidence(analysis),
     backendReachable: true,
     modelReady,
-    usingMockPanels: liveHits.length === 0,
+    usingMockPanels: false,
   };
 }

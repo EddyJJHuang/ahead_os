@@ -1,6 +1,5 @@
 /**
- * Client-side demo data for PM OS panels.
- * TODO: POST /api/triage | POST /api/draft | GET /api/evidence
+ * Client-side demo fallback when /api/pm/* is unreachable.
  */
 
 import type {
@@ -27,18 +26,27 @@ export const DEMO_ACTIONS: ActionItem[] = [
     title: "Schedule QA review",
     impact: "High",
     effort: "Low",
+    draft_kind: "slack_update",
+    context:
+      "Ask Sarah (QA Lead) to book a QA war room today at 2 PM to triage the 3 remaining P1 bugs blocking release sign-off.",
   },
   {
     id: "action-2",
     title: "Request PR-88 re-review",
     impact: "Critical",
     effort: "Medium",
+    draft_kind: "slack_update",
+    context:
+      "Ping security and eng leads to re-review PR-88 (auth refactor) before we can merge the hotfix.",
   },
   {
     id: "action-3",
     title: "Send stakeholder update",
     impact: "High",
     effort: "Low",
+    draft_kind: "stakeholder_email",
+    context:
+      "Send a brief status update on the Enterprise Checkout launch and the likely 2-day delay.",
   },
 ];
 
