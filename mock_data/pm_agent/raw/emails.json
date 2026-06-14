@@ -2,7 +2,7 @@
   {
     "id": "email_001",
     "type": "email",
-    "timestamp": "2026-06-12T09:15:00",
+    "timestamp": "2026-06-15T09:15:00",
     "from": "priya@dellnvidia.dev",
     "to": ["jiawen@novaworks.ai"],
     "subject": "Hackathon environment and agent runtime notes",
@@ -14,7 +14,7 @@
   {
     "id": "email_002",
     "type": "email",
-    "timestamp": "2026-06-12T10:40:00",
+    "timestamp": "2026-06-15T10:40:00",
     "from": "alex@novaworks.ai",
     "to": ["jiawen@novaworks.ai"],
     "subject": "Chroma ingestion status",
@@ -26,7 +26,7 @@
   {
     "id": "email_003",
     "type": "email",
-    "timestamp": "2026-06-12T13:20:00",
+    "timestamp": "2026-06-15T13:20:00",
     "from": "daniel@arcstudio.ai",
     "to": ["jiawen@novaworks.ai"],
     "subject": "Use case feedback: local chief of staff",
