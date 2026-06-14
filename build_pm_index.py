@@ -6,6 +6,7 @@ Before indexing, it regenerates ``docs/pm_workspace.md`` from the raw PM data
 files when they are present:
 
   ``SSD_ROOT/mock_data/pm_agent/raw/*.json|*.md|*.txt``
+  ``SSD_ROOT/mock_data/pm_agent/live/*.json|*.md|*.txt``  (optional private data)
   ``SSD_ROOT/mock_data/pm_agent/docs/*.md``
   ``SSD_ROOT/mock_data/pm_agent/playbook/*.md``
 
@@ -46,6 +47,7 @@ BGE_DIR = SSD_ROOT / "models" / "bge-large-en-v1.5"
 ONNX_PATH = BGE_DIR / "onnx" / "model.onnx"
 TOK_PATH = BGE_DIR / "tokenizer.json"
 PM_RAW_DIR = SSD_ROOT / "mock_data" / "pm_agent" / "raw"
+PM_LIVE_DIR = SSD_ROOT / "mock_data" / "pm_agent" / "live"
 PM_DOCS_DIR = SSD_ROOT / "mock_data" / "pm_agent" / "docs"
 PM_PLAYBOOK_DIR = SSD_ROOT / "mock_data" / "pm_agent" / "playbook"
 PM_WORKSPACE_DOC = PM_DOCS_DIR / "pm_workspace.md"
@@ -137,12 +139,13 @@ def _raw_text_to_markdown(path: Path) -> str:
 
 
 def regenerate_pm_workspace() -> list[str]:
-    """Generate docs/pm_workspace.md from the real fake-data files if present."""
+    """Generate docs/pm_workspace.md from fake data plus optional live data."""
     PM_DOCS_DIR.mkdir(parents=True, exist_ok=True)
     sections = [
         "# Generated PM Workspace Snapshot",
         "",
-        "Generated from `mock_data/pm_agent/raw/` for local PM launch-readiness retrieval.",
+        "Generated from `mock_data/pm_agent/raw/` and optional private "
+        "`mock_data/pm_agent/live/` for local PM launch-readiness retrieval.",
         "",
     ]
     missing: list[str] = []
@@ -164,6 +167,26 @@ def regenerate_pm_workspace() -> list[str]:
             sections.append("")
             sections.append(f"Could not parse {filename}: {type(exc).__name__}: {exc}")
             sections.append("")
+    if PM_LIVE_DIR.exists():
+        live_files = sorted(
+            p for p in PM_LIVE_DIR.iterdir()
+            if p.suffix in {".json", ".md", ".txt"} and not p.name.startswith("._")
+        )
+        if live_files:
+            sections.append("# Private Live Workspace Data")
+            sections.append("")
+        for path in live_files:
+            try:
+                if path.suffix == ".json":
+                    sections.append(_raw_json_to_markdown(path))
+                else:
+                    sections.append(_raw_text_to_markdown(path))
+                sections.append("")
+            except (OSError, json.JSONDecodeError) as exc:
+                sections.append(f"## {path.name}")
+                sections.append("")
+                sections.append(f"Could not parse {path.name}: {type(exc).__name__}: {exc}")
+                sections.append("")
     if missing:
         sections.append("## Missing Raw Files")
         sections.append("")
@@ -248,6 +271,7 @@ def _pm_markdown_files() -> list[Path]:
 def main() -> None:
     print(f"SSD_ROOT = {SSD_ROOT}")
     print(f"raw      = {PM_RAW_DIR}")
+    print(f"live     = {PM_LIVE_DIR}")
     print(f"docs     = {PM_DOCS_DIR}")
     print(f"playbook = {PM_PLAYBOOK_DIR}")
     print(f"onnx     = {ONNX_PATH}")
