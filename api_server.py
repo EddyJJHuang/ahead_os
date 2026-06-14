@@ -177,10 +177,12 @@ def _run_chat(messages: list[dict], max_rounds: int) -> tuple[str, list[dict]]:
     for _ in range(max_rounds):
         resp = agent.client.chat.completions.create(
             model=agent.MODEL_ID, messages=convo, tools=agent.TOOLS,
-            tool_choice="auto", max_tokens=512,
+            tool_choice="auto", max_tokens=2048,
         )
         msg = resp.choices[0].message
-        convo.append(msg.model_dump(exclude_none=True))
+        _am = msg.model_dump(exclude_none=True)
+        _am.pop("reasoning_content", None)  # don't replay <think> into context (token bloat in 4096 window)
+        convo.append(_am)
 
         if msg.tool_calls:  # native tool calling
             for tc in msg.tool_calls:
@@ -233,7 +235,7 @@ def _stream_chat(messages: list[dict], max_rounds: int) -> Iterable[str]:
         for _ in range(max_rounds):
             stream = agent.client.chat.completions.create(
                 model=agent.MODEL_ID, messages=convo, tools=agent.TOOLS,
-                tool_choice="auto", max_tokens=512, stream=True,
+                tool_choice="auto", max_tokens=2048, stream=True,
             )
             content_parts: list[str] = []
             tool_acc: dict[int, dict] = {}
