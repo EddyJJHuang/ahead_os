@@ -32,9 +32,7 @@ const SUGGESTED_PROMPTS = [
 const TASK_INTENT_PATTERNS: RegExp[] = [
   /every\s+\d+\s*(min|minute|hour|hr|day|week)/i,
   /\b(recurring|periodically|every day|daily|hourly|weekly|on a schedule|automate|automatically)\b/i,
-  /\b(remind me|keep an eye|watch for|monitor|check\s+\w+\s+(every|each))\b/i,
-  /每\s*隔|每天|每小时|每周|每分钟|每\s*\d+\s*(分钟|小时|天|周)/,
-  /定期|定时|周期|自动(化|执行|运行)?|持续(监测|监控)|盯着|提醒我|监控|帮我每/,
+  /\b(remind me|keep an eye|watch for|monitor|track|check\s+\w+\s+(every|each))\b/i,
 ];
 
 function detectTaskIntent(text: string): boolean {

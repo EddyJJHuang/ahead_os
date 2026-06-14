@@ -240,10 +240,14 @@ def call_pm_tool(name: str, args: dict) -> Any:
 # ---------------------------------------------------------------------------
 # Generation tools (LLM-backed drafts)
 # ---------------------------------------------------------------------------
+_ENGLISH_ONLY = " Always respond in English only, regardless of the language of the input or examples."
+
+
 def _llm(system: str, user: str, max_tokens: int = 700) -> str:
     resp = agent.client.chat.completions.create(
         model=agent.MODEL_ID,
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": user}],
+        messages=[{"role": "system", "content": system + _ENGLISH_ONLY},
+                  {"role": "user", "content": user}],
         max_tokens=max_tokens,
     )
     return (resp.choices[0].message.content or "").strip()

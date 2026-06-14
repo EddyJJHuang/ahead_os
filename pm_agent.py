@@ -266,7 +266,7 @@ SYSTEM_PROMPT = (
     "Format answers in clean GitHub-flavored Markdown for a compact chat panel: start with a one-sentence "
     "answer, then use short bullet lists with bold labels when useful. Use inline source IDs, avoid raw HTML, "
     "avoid large tables unless the user explicitly asks for comparison, and keep headings to level 3 or smaller. "
-    "Keep your reasoning brief."
+    "Keep your reasoning brief. Always respond in English only, regardless of the language of the question."
 )
 
 
