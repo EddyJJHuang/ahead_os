@@ -4,8 +4,9 @@
 
 import type {
   ActionItem,
-  DraftContent,
+  ActivityFeedItem,
   EvidenceItem,
+  ExecutionArtifact,
   ExecutiveDecisionData,
 } from "../types";
 
@@ -22,31 +23,43 @@ export const DEMO_EXECUTIVE: ExecutiveDecisionData = {
 
 export const DEMO_ACTIONS: ActionItem[] = [
   {
-    id: "action-1",
-    title: "Schedule QA review",
+    id: "act-qa",
+    title: "Schedule Checkout QA Review",
     impact: "High",
-    effort: "Low",
+    effort: "5 min",
+    explanation:
+      "QA signoff is missing from the launch criteria. Schedule a review to unblock the launch decision.",
+    ctaLabel: "Generate Meeting",
+    artifactType: "meeting",
     draft_kind: "slack_update",
     context:
-      "Ask Sarah (QA Lead) to book a QA war room today at 2 PM to triage the 3 remaining P1 bugs blocking release sign-off.",
+      "Ask Sarah (QA Lead) to book a full-day Enterprise Checkout QA pass before the Go/No-Go on 2026-06-18.",
   },
   {
-    id: "action-2",
-    title: "Request PR-88 re-review",
-    impact: "Critical",
-    effort: "Medium",
-    draft_kind: "slack_update",
-    context:
-      "Ping security and eng leads to re-review PR-88 (auth refactor) before we can merge the hotfix.",
-  },
-  {
-    id: "action-3",
-    title: "Send stakeholder update",
+    id: "act-globex",
+    title: "Notify Globex",
     impact: "High",
-    effort: "Low",
+    effort: "5 min",
+    explanation:
+      "Globex has escalated checkout issues and represents $480K ARR. Send a proactive launch-risk update.",
+    ctaLabel: "Generate Email",
+    artifactType: "email",
     draft_kind: "stakeholder_email",
     context:
-      "Send a brief status update on the Enterprise Checkout launch and the likely 2-day delay.",
+      "Reply to Globex re: Amex checkout failure (CHK-101). Acknowledge the issue, commit to a fix timeline, and reassure on the double-charge safeguard.",
+  },
+  {
+    id: "act-pr88",
+    title: "Request PR-88 Review",
+    impact: "High",
+    effort: "2 min",
+    explanation:
+      "PR-88 has been waiting for review and blocks checkout readiness. Ask the reviewer to prioritize it.",
+    ctaLabel: "Generate Review Request",
+    artifactType: "review",
+    draft_kind: "slack_update",
+    context:
+      "Ping Alex Kim to review PR-88 ('Enterprise Checkout launch PR') today — it blocks the launch.",
   },
 ];
 
@@ -108,27 +121,47 @@ export const DEMO_EVIDENCE: EvidenceItem[] = [
   },
 ];
 
-export const DEMO_DRAFTS: Record<string, DraftContent> = {
-  "action-1": {
-    action_id: "action-1",
-    action_title: "Schedule QA review",
-    subject: "QA War Room — Today 2 PM",
-    body:
-      "Team,\n\nWe need a focused QA session today at 2 PM to triage the 3 remaining P1 bugs blocking release sign-off.\n\n— PM",
+export const DEMO_ARTIFACTS: Record<string, ExecutionArtifact> = {
+  "act-qa": {
+    type: "meeting",
+    action_id: "act-qa",
+    title: "Enterprise Checkout QA Review",
+    datetime: "Wed, Jun 18 · 10:00 AM – 12:00 PM PT",
+    attendees: "Sarah Chen (QA Lead), Alex Kim (Eng), You",
+    agenda:
+      "Full checkout regression pass before Go/No-Go.\n\n• Amex payment capture (CHK-101)\n• Multi-currency VAT (CHK-103)\n• Payment retry / double-charge safeguard (CHK-102)\n• Sign-off criteria vs launch checklist",
   },
-  "action-2": {
-    action_id: "action-2",
-    action_title: "Request PR-88 re-review",
-    subject: "PR-88 Security Re-Review Request",
+  "act-globex": {
+    type: "email",
+    action_id: "act-globex",
+    to: "vp-ops@globex.com",
+    subject: "Enterprise Checkout launch — proactive update on Amex issue",
     body:
-      "@alex-kim @security-bot\n\nPR-88 needs a security re-review before we can merge.\n\n— PM",
+      "Hi team,\n\nThank you for flagging the Amex checkout failures. We’ve prioritized CHK-101 and are targeting a fix ahead of our revised launch window (Jun 23).\n\nWe’re delaying the Enterprise Checkout launch by 2 days to protect payment quality and complete QA sign-off. I’ll follow up with a concrete timeline once QA review is scheduled.\n\nBest,\nNikkie",
   },
-  "action-3": {
-    action_id: "action-3",
-    action_title: "Send stakeholder update",
-    subject: "Launch Update — Revised Timeline",
+  "act-pr88": {
+    type: "review",
+    action_id: "act-pr88",
+    target: "PR-88 · github.com/meridian/checkout#88",
+    reviewer: "@alex-kim",
+    message:
+      "@alex-kim — PR-88 is the launch-blocking checkout PR and has been waiting 5 days for review. Can you prioritize a review today? Happy to walk through the Amex capture changes and linked Jira items (CHK-110).",
+  },
+  "act-pr": {
+    type: "review",
+    action_id: "act-pr",
+    target: "PR-88 · github.com/meridian/checkout#88",
+    reviewer: "@alex-kim",
+    message:
+      "@alex-kim — PR-88 is the launch-blocking checkout PR and has been waiting 5 days for review. Can you prioritize a review today?",
+  },
+  "act-cust": {
+    type: "email",
+    action_id: "act-cust",
+    to: "vp-ops@globex.com",
+    subject: "Enterprise Checkout launch — proactive update on Amex issue",
     body:
-      "Hi team,\n\nAfter reviewing overnight signals, we've decided to delay the launch by 2 days to ensure quality and compliance.\n\n— Product",
+      "Hi team,\n\nThank you for escalating the Amex checkout failures. We’ve prioritized CHK-101 and are delaying launch to Jun 23 to complete QA sign-off.\n\nBest,\nNikkie",
   },
 };
 
@@ -150,4 +183,43 @@ export const LOADING_TRACE = [
   "Matching customer emails",
   "Reviewing calendar",
   "Generating action plan",
+];
+
+export const DEMO_ACTIVITY_FEED: ActivityFeedItem[] = [
+  {
+    id: "demo-1",
+    time: "6:57 PM",
+    text: "Enterprise escalation received",
+    icon: "alert",
+  },
+  {
+    id: "demo-2",
+    time: "6:57 PM",
+    text: "Launch risk recalculated",
+    icon: "scan",
+  },
+  {
+    id: "demo-3",
+    time: "6:58 PM",
+    text: "PR-88 blocker matched to Jira-142",
+    icon: "link",
+  },
+  {
+    id: "demo-4",
+    time: "6:58 PM",
+    text: "QA review gap detected",
+    icon: "gap",
+  },
+  {
+    id: "demo-5",
+    time: "6:59 PM",
+    text: "Stakeholder update drafted",
+    icon: "draft",
+  },
+  {
+    id: "demo-6",
+    time: "6:59 PM",
+    text: "Recommended decision updated",
+    icon: "decision",
+  },
 ];

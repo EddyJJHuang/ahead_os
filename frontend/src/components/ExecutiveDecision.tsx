@@ -1,5 +1,6 @@
 import type { ExecutiveDecisionData } from "../types";
 import { LOADING_TRACE } from "../mock/demoData";
+import DecisionContext from "./DecisionContext";
 import TraceLoader from "./TraceLoader";
 
 interface ExecutiveDecisionProps {
@@ -52,15 +53,7 @@ export default function ExecutiveDecision({
 
       <p className="executive__summary">{data.summary}</p>
 
-      <div className="evidence-strength">
-        <span className="evidence-strength__label">Evidence strength</span>
-        <span className="evidence-strength__value">
-          {data.evidence_strength}
-        </span>
-        <span className="evidence-strength__sources">
-          Based on {data.evidence_sources.join(" + ")}
-        </span>
-      </div>
+      <DecisionContext />
     </div>
   );
 }

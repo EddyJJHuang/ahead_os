@@ -1,7 +1,18 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { postPmAsk, postPmAskStream } from "../api/client";
 import type { ChatMessage } from "../api/pm_types";
-import { DEMO_CHAT_FALLBACK, DEMO_CHAT_OFFLINE } from "../mock/demoData";
+import {
+  DEMO_ACTIVITY_FEED,
+  DEMO_CHAT_FALLBACK,
+  DEMO_CHAT_OFFLINE,
+} from "../mock/demoData";
+import type { ActivityFeedItem } from "../types";
+import {
+  createActivityItem,
+  toolCallActivity,
+  toolResultActivity,
+} from "../utils/activityFeed";
+import AgentActivityFeed from "./AgentActivityFeed";
 import AgentTrace from "./AgentTrace";
 
 const SUGGESTED_PROMPTS = [
@@ -18,11 +29,13 @@ interface UiMessage {
 interface AskPMOSProps {
   backendReachable: boolean;
   modelReady: boolean;
+  usingMockPanels: boolean;
 }
 
 export default function AskPMOS({
   backendReachable,
   modelReady,
+  usingMockPanels,
 }: AskPMOSProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
@@ -31,6 +44,29 @@ export default function AskPMOS({
   const [loading, setLoading] = useState(false);
   const [streamingText, setStreamingText] = useState("");
   const [usingLiveAgent, setUsingLiveAgent] = useState(false);
+  const [liveActivities, setLiveActivities] = useState<ActivityFeedItem[]>([]);
+  const analysisLogged = useRef(false);
+
+  useEffect(() => {
+    if (usingMockPanels || analysisLogged.current) return;
+    analysisLogged.current = true;
+    setLiveActivities([
+      createActivityItem("Launch risk recalculated", "scan"),
+      createActivityItem("Recommended decision updated", "decision"),
+    ]);
+  }, [usingMockPanels]);
+
+  const appendActivity = useCallback((item: ActivityFeedItem) => {
+    setLiveActivities((prev) => [item, ...prev]);
+  }, []);
+
+  const feedItems = useMemo(
+    () =>
+      liveActivities.length > 0
+        ? [...liveActivities, ...DEMO_ACTIVITY_FEED]
+        : DEMO_ACTIVITY_FEED,
+    [liveActivities]
+  );
 
   const offlineFallback = useCallback((question: string): string => {
     const key = question.toLowerCase();
@@ -60,6 +96,9 @@ export default function AskPMOS({
     setLoading(true);
     setTraceSteps([]);
     setStreamingText("");
+    appendActivity(
+      createActivityItem(`Question received: "${question.trim()}"`, "tool")
+    );
 
     if (!backendReachable || !modelReady) {
       showDemoAnswer(question);
@@ -78,9 +117,11 @@ export default function AskPMOS({
         } else if (event.type === "tool_call") {
           steps.push(`Calling ${event.name}…`);
           setTraceSteps([...steps]);
+          appendActivity(toolCallActivity(event.name));
         } else if (event.type === "tool_result") {
           steps.push(`${event.name} returned`);
           setTraceSteps([...steps]);
+          appendActivity(toolResultActivity(event.name));
         } else if (event.type === "error") {
           throw new Error(event.message);
         }
@@ -89,12 +130,18 @@ export default function AskPMOS({
       setUsingLiveAgent(true);
       setDisplay((prev) => [...prev, { role: "assistant", text: answer }]);
       setHistory((prev) => [...prev, { role: "assistant", content: answer }]);
+      appendActivity(createActivityItem("Agent response completed", "decision"));
     } catch {
       const res = await postPmAsk({ messages: nextHistory });
       if (res?.answer) {
         setUsingLiveAgent(true);
         setDisplay((prev) => [...prev, { role: "assistant", text: res.answer }]);
         setHistory((prev) => [...prev, { role: "assistant", content: res.answer }]);
+        appendActivity(createActivityItem("Agent response completed", "decision"));
+        for (const step of res.trace) {
+          if (step.type === "tool_call") appendActivity(toolCallActivity(step.name));
+          if (step.type === "tool_result") appendActivity(toolResultActivity(step.name));
+        }
       } else {
         showDemoAnswer(question);
       }
@@ -104,22 +151,23 @@ export default function AskPMOS({
     }
   };
 
-  const statusHint =
-    !backendReachable
-      ? "Backend offline — demo answers only."
-      : !modelReady
-        ? "Model loading — demo answers until vLLM is ready."
-        : "Live PM OS agent on :8100.";
+  const statusHint = !backendReachable
+    ? "Backend offline — demo answers only."
+    : !modelReady
+      ? "Model loading — demo answers until vLLM is ready."
+      : usingLiveAgent
+        ? "Live PM OS agent on :8100."
+        : "Live PM OS agent on :8100 — ready.";
 
   return (
     <div className="chat">
-      {usingLiveAgent && (
-        <span className="chat-live-indicator">Live agent</span>
-      )}
+      <p className="chat__status-line">{statusHint}</p>
 
       <div className="chat__messages">
         {display.length === 0 && !loading && (
-          <p className="chat__hint">{statusHint}</p>
+          <p className="chat__hint">
+            Ask follow-ups about the launch decision.
+          </p>
         )}
         {display.map((msg, i) => (
           <div
@@ -175,6 +223,16 @@ export default function AskPMOS({
           Ask
         </button>
       </form>
+
+      <div className="chat__activity-divider" />
+
+      <AgentActivityFeed
+        items={feedItems}
+        showLiveBadge={liveActivities.length > 0}
+        showDemoBadge={liveActivities.length === 0}
+        maxItems={5}
+        compact
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { EvidenceItem } from "../types";
+import SourceIcon, { hasSourceIcon } from "./SourceIcon";
 
 const SOURCES = [
   "All",
@@ -21,6 +22,19 @@ function sourceClass(source: string): string {
   return `evidence-card__source evidence-card__source--${key}`;
 }
 
+function SourceLabel({ source }: { source: string }) {
+  if (!hasSourceIcon(source)) {
+    return <>{source}</>;
+  }
+
+  return (
+    <>
+      <SourceIcon source={source} size={12} />
+      <span className="source-label__text">{source}</span>
+    </>
+  );
+}
+
 export default function EvidenceDrawer({ items }: EvidenceDrawerProps) {
   const [filter, setFilter] = useState<string>("All");
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -34,7 +48,7 @@ export default function EvidenceDrawer({ items }: EvidenceDrawerProps) {
     <>
       {liveCount > 0 && (
         <span className="panel-badge panel-badge--live">
-          {liveCount} live from KB
+          {liveCount} LIVE SIGNALS
         </span>
       )}
       <div className="evidence-filters">
@@ -45,7 +59,7 @@ export default function EvidenceDrawer({ items }: EvidenceDrawerProps) {
             className={`filter-chip ${filter === source ? "filter-chip--active" : ""}`}
             onClick={() => setFilter(source)}
           >
-            {source}
+            <SourceLabel source={source} />
           </button>
         ))}
       </div>
@@ -63,7 +77,9 @@ export default function EvidenceDrawer({ items }: EvidenceDrawerProps) {
                 className="evidence-card__header"
                 onClick={() => setExpandedId(isExpanded ? null : item.id)}
               >
-                <span className={sourceClass(item.source)}>{item.source}</span>
+                <span className={sourceClass(item.source)}>
+                  <SourceLabel source={item.source} />
+                </span>
                 <div className="evidence-card__content">
                   <div className="evidence-card__title-row">
                     <span className="evidence-card__title">{item.title}</span>

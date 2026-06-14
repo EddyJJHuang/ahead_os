@@ -20,6 +20,7 @@ import type {
   ExecutiveDecisionData,
   PanelLoadState,
 } from "../types";
+import { enrichAction } from "../utils/actionExecution";
 
 const SOURCE_LABELS: Record<string, string> = {
   jira: "Jira",
@@ -68,15 +69,18 @@ function mapExecutive(analysis: AnalysisResponse): ExecutiveDecisionData {
 }
 
 function mapActions(analysis: AnalysisResponse): ActionItem[] {
-  return analysis.actions.slice(0, 3).map((action) => ({
-    id: action.id,
-    title: action.title,
-    impact: action.impact,
-    effort: action.effort,
-    rationale: action.rationale,
-    draft_kind: action.draft_kind,
-    context: action.context,
-  }));
+  return analysis.actions.slice(0, 3).map((action) => {
+    const base: ActionItem = {
+      id: action.id,
+      title: action.title,
+      impact: action.impact,
+      effort: action.effort,
+      rationale: action.rationale,
+      draft_kind: action.draft_kind,
+      context: action.context,
+    };
+    return { ...base, ...enrichAction(base) };
+  });
 }
 
 function refToEvidence(

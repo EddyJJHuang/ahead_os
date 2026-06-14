@@ -28,16 +28,29 @@ export default function App() {
         ? "Agent connected"
         : "API up — model loading";
 
+  const todayLabel = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
   return (
     <div className="app">
       <nav className="top-nav">
         <div className="top-nav__brand">
-          <div className="top-nav__logo">PM</div>
-          <div>
-            <div className="top-nav__title">Local PM OS</div>
-            <div className="top-nav__subtitle">Executive launch intelligence</div>
-          </div>
+          <img
+            className="top-nav__logo-img"
+            src="/local-pm-os-logo.png"
+            alt="Local PM OS"
+          />
         </div>
+
+        <div className="top-nav__greeting">
+          <span className="top-nav__hello">Good morning, Nikkie</span>
+          <span className="top-nav__date">{todayLabel}</span>
+        </div>
+
         <div className="top-nav__status">
           <span
             className={`status-dot ${agentReady ? "" : "status-dot--offline"}`}
@@ -64,7 +77,7 @@ export default function App() {
         <section className="panel panel--cream">
           <header className="panel__header">
             <div className="panel__label">Actions</div>
-            <div className="panel__title">Top 3 Actions</div>
+            <div className="panel__title">Recommended Next Steps</div>
           </header>
           <div className="panel__body">
             {!loading && panels && (
@@ -79,7 +92,7 @@ export default function App() {
           </div>
         </section>
 
-        <section className="panel panel--pink">
+        <section className="panel panel--pink panel--chat">
           <header className="panel__header">
             <div className="panel__label">Agent</div>
             <div className="panel__title">Ask PM OS</div>
@@ -88,14 +101,15 @@ export default function App() {
             <AskPMOS
               backendReachable={online}
               modelReady={panels?.modelReady ?? false}
+              usingMockPanels={panels?.usingMockPanels ?? true}
             />
           </div>
         </section>
 
         <section className="panel panel--sky">
           <header className="panel__header">
-            <div className="panel__label">Sources</div>
-            <div className="panel__title">Evidence Drawer</div>
+            <div className="panel__label">Context</div>
+            <div className="panel__title">Context Hub</div>
           </header>
           <div className="panel__body">
             {!loading && panels && (
