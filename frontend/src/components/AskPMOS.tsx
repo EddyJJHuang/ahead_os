@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { postPmAsk, postPmAskStream } from "../api/client";
-import type { ChatMessage } from "../api/pm_types";
+import {
+  postPmAsk,
+  postPmAskStream,
+  postPmAutonomyTask,
+  postPmAutonomyTaskPreview,
+} from "../api/client";
+import type { ChatMessage, TaskPreview } from "../api/pm_types";
 import {
   DEMO_ACTIVITY_FEED,
   DEMO_CHAT_FALLBACK,
@@ -14,28 +19,65 @@ import {
 } from "../utils/activityFeed";
 import AgentActivityFeed from "./AgentActivityFeed";
 import AgentTrace from "./AgentTrace";
+import Markdown from "./Markdown";
 
 const SUGGESTED_PROMPTS = [
   "Can we ship Friday?",
-  "What changed overnight?",
   "What is blocking launch?",
+  "Every 30 min, watch Jira & email for P0s",
 ];
+
+// Heuristic gate: when a message looks like an automation/recurring request, we
+// ask the backend to propose a task spec (the model does the real parsing).
+const TASK_INTENT_PATTERNS: RegExp[] = [
+  /every\s+\d+\s*(min|minute|hour|hr|day|week)/i,
+  /\b(recurring|periodically|every day|daily|hourly|weekly|on a schedule|automate|automatically)\b/i,
+  /\b(remind me|keep an eye|watch for|monitor|check\s+\w+\s+(every|each))\b/i,
+  /每\s*隔|每天|每小时|每周|每分钟|每\s*\d+\s*(分钟|小时|天|周)/,
+  /定期|定时|周期|自动(化|执行|运行)?|持续(监测|监控)|盯着|提醒我|监控|帮我每/,
+];
+
+function detectTaskIntent(text: string): boolean {
+  return TASK_INTENT_PATTERNS.some((re) => re.test(text));
+}
+
+function formatCadence(min: number): string {
+  if (min < 60) return `every ${min} min`;
+  if (min % 1440 === 0) return min === 1440 ? "daily" : `every ${min / 1440} days`;
+  if (min % 60 === 0) return min === 60 ? "hourly" : `every ${min / 60} h`;
+  return `every ${min} min`;
+}
+
+const SRC_LABEL: Record<string, string> = {
+  jira: "Jira",
+  github: "GitHub",
+  emails: "Email",
+  email: "Email",
+  calendar: "Calendar",
+  tasks: "Tasks",
+  slack: "Slack",
+};
+const srcLabel = (s: string): string => SRC_LABEL[s] ?? s;
 
 interface UiMessage {
   role: "user" | "assistant";
   text: string;
 }
 
+type LaunchState = "idle" | "launching" | "launched" | "error";
+
 interface AskPMOSProps {
   backendReachable: boolean;
   modelReady: boolean;
   usingMockPanels: boolean;
+  onTaskCreated?: () => void;
 }
 
 export default function AskPMOS({
   backendReachable,
   modelReady,
   usingMockPanels,
+  onTaskCreated,
 }: AskPMOSProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
@@ -46,6 +88,17 @@ export default function AskPMOS({
   const [usingLiveAgent, setUsingLiveAgent] = useState(false);
   const [liveActivities, setLiveActivities] = useState<ActivityFeedItem[]>([]);
   const analysisLogged = useRef(false);
+
+  // Recurring-task proposal surfaced inside the chat.
+  const [proposal, setProposal] = useState<TaskPreview | null>(null);
+  const [proposalLoading, setProposalLoading] = useState(false);
+  const [launchState, setLaunchState] = useState<LaunchState>("idle");
+
+  // Keep the conversation pinned to the latest content, like a normal chatbot.
+  const endRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [display, streamingText, traceSteps, proposal, proposalLoading, loading]);
 
   useEffect(() => {
     if (usingMockPanels || analysisLogged.current) return;
@@ -59,6 +112,72 @@ export default function AskPMOS({
   const appendActivity = useCallback((item: ActivityFeedItem) => {
     setLiveActivities((prev) => [item, ...prev]);
   }, []);
+
+  // When a message looks like an automation request, ask the backend (model) to
+  // propose a recurring-task spec; surface it as a confirm-to-launch card.
+  const maybeProposeTask = useCallback(
+    async (question: string) => {
+      if (!backendReachable || !detectTaskIntent(question)) return;
+      setProposal(null);
+      setLaunchState("idle");
+      setProposalLoading(true);
+      appendActivity(createActivityItem("Recurring-task intent detected", "scan"));
+      const preview = await postPmAutonomyTaskPreview(question);
+      setProposalLoading(false);
+      if (preview) setProposal(preview);
+    },
+    [backendReachable, appendActivity]
+  );
+
+  const handleLaunchTask = useCallback(async () => {
+    if (!proposal) return;
+    setLaunchState("launching");
+    appendActivity(
+      createActivityItem(`Launching "${proposal.title}" on NemoClaw…`, "tool")
+    );
+    setDisplay((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        text: `⏳ Commanding NemoClaw to launch "${proposal.title}"…`,
+      },
+    ]);
+    const res = await postPmAutonomyTask({ request: proposal.request });
+    if (res?.task) {
+      const t = res.task;
+      const cadence = formatCadence(t.cadence_minutes);
+      const nextRun = t.next_run_at
+        ? new Date(t.next_run_at).toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          })
+        : "shortly";
+      const scope = t.source_scope.map(srcLabel).join(", ");
+      setLaunchState("launched");
+      setDisplay((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: `✅ Launched on NemoClaw — "${t.title}". Runs ${cadence}; next run ~${nextRun}. Watching: ${scope}. Review it under Scheduled Tasks (top-right).`,
+        },
+      ]);
+      appendActivity(
+        createActivityItem(`Task launched: ${t.title} (${cadence})`, "decision")
+      );
+      setProposal(null);
+      onTaskCreated?.();
+    } else {
+      setLaunchState("error");
+      setDisplay((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          text: "⚠️ Could not launch the task — backend error. Please try again.",
+        },
+      ]);
+      appendActivity(createActivityItem("Task launch failed", "alert"));
+    }
+  }, [proposal, appendActivity, onTaskCreated]);
 
   const feedItems = useMemo(
     () =>
@@ -148,6 +267,7 @@ export default function AskPMOS({
     } finally {
       setStreamingText("");
       setLoading(false);
+      void maybeProposeTask(question);
     }
   };
 
@@ -174,32 +294,86 @@ export default function AskPMOS({
             key={i}
             className={`chat__message chat__message--${msg.role === "user" ? "user" : "agent"}`}
           >
-            {msg.text}
+            {msg.role === "user" ? msg.text : <Markdown>{msg.text}</Markdown>}
           </div>
         ))}
         {loading && streamingText && (
-          <div className="chat__message chat__message--agent">{streamingText}</div>
+          <div className="chat__message chat__message--agent">
+            <Markdown>{streamingText}</Markdown>
+          </div>
         )}
         {loading && traceSteps.length > 0 && <AgentTrace steps={traceSteps} />}
         {loading && !streamingText && traceSteps.length === 0 && (
           <p className="chat__thinking">Thinking…</p>
         )}
+
+        {proposalLoading && (
+          <div className="task-proposal task-proposal--loading">
+            <span className="task-proposal__spinner" aria-hidden />
+            Detecting a recurring task…
+          </div>
+        )}
+
+        {proposal && launchState !== "launched" && (
+          <div className="task-proposal">
+            <div className="task-proposal__head">
+              <span className="task-proposal__badge">Recurring task</span>
+              <span className="task-proposal__title">{proposal.title}</span>
+            </div>
+            <div className="task-proposal__meta">
+              <span>⏱ {formatCadence(proposal.cadence_minutes)}</span>
+              <span>
+                {proposal.task_type === "creative"
+                  ? "Generates a deliverable"
+                  : "Monitors & alerts"}
+              </span>
+              <span>{proposal.source_scope.map(srcLabel).join(" · ")}</span>
+            </div>
+            <p className="task-proposal__hint">
+              Launch on NemoClaw to run this automatically in the local sandbox.
+            </p>
+            <div className="task-proposal__actions">
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={handleLaunchTask}
+                disabled={launchState === "launching"}
+              >
+                {launchState === "launching"
+                  ? "Launching…"
+                  : "▶ Launch recurring task"}
+              </button>
+              <button
+                type="button"
+                className="btn btn--ghost"
+                onClick={() => setProposal(null)}
+                disabled={launchState === "launching"}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div ref={endRef} />
       </div>
 
-      <div className="chat__prompts">
-        <span className="chat__prompts-label">Suggested</span>
-        {SUGGESTED_PROMPTS.map((prompt) => (
-          <button
-            key={prompt}
-            type="button"
-            className="prompt-chip"
-            onClick={() => sendQuestion(prompt)}
-            disabled={loading}
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
+      {display.length === 0 && (
+        <div className="chat__prompts">
+          <span className="chat__prompts-label">Suggested</span>
+          {SUGGESTED_PROMPTS.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              className="prompt-chip"
+              onClick={() => sendQuestion(prompt)}
+              disabled={loading}
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      )}
 
       <form
         className="chat__input-row"

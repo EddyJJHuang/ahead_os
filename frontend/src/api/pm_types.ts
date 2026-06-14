@@ -114,3 +114,124 @@ export interface SourceResponse {
 }
 
 export type SourceCounts = Record<SourceName, number>;
+
+
+export interface AutonomyActionOption {
+  id: string;
+  title: string;
+  impact: "High" | "Medium" | "Low";
+  effort: string;
+  rationale?: string;
+  draft_kind?: DraftKind;
+  context?: string;
+  evidence: EvidenceRef[];
+}
+
+export interface AutonomySuggestion {
+  id: string;
+  title: string;
+  severity: RiskLevel;
+  urgent: boolean;
+  changed_since_last_scan: boolean;
+  decision: Decision;
+  summary: string;
+  why_now: string;
+  detected_at: string;
+  trigger: string;
+  task_id: string | null;
+  task_prompt: string | null;
+  source_scope: SourceName[];
+  evidence: EvidenceRef[];
+  action_options: AutonomyActionOption[];
+  analysis_generated_at: string | null;
+  fingerprint: string;
+  runtime: string;
+}
+
+export interface NemoClawRuntimeStatus {
+  installed: boolean;
+  name: string;
+  phase: string;
+  ok: boolean;
+  model?: string;
+  provider?: string;
+  gateway_state?: string;
+  openshell_driver?: string;
+  openshell_version?: string;
+  sandbox_gpu_enabled?: boolean;
+  policies?: string[];
+  detail?: string;
+}
+
+export interface AutonomyTask {
+  id: string;
+  title: string;
+  prompt: string;
+  cadence_minutes: number;
+  source_scope: SourceName[];
+  task_type: "monitor" | "creative";
+  output_format: string | null;
+  enabled: boolean;
+  created_from: string;
+  created_at: string;
+  last_run_at: string | null;
+  next_run_at: string | null;
+  last_result: {
+    ran_at?: string;
+    suggestion_id?: string;
+    urgent?: boolean;
+    task_type?: "monitor" | "creative";
+    output?: string;
+    output_error?: string;
+    error?: string;
+  } | null;
+}
+
+export interface AutonomyStatusResponse {
+  status: string;
+  runtime: NemoClawRuntimeStatus;
+  scheduler: {
+    running: boolean;
+    poll_seconds: number;
+    task_count: number;
+  };
+  tasks: AutonomyTask[];
+  latest_suggestion: AutonomySuggestion | null;
+  last_scan_at: string | null;
+  monitor_runs: number;
+}
+
+export interface AutonomyRunResponse {
+  status: string;
+  trigger: string;
+  source_counts: Partial<SourceCounts>;
+  suggestion: AutonomySuggestion;
+  runtime: NemoClawRuntimeStatus;
+}
+
+export interface AutonomyTaskRequest {
+  request: string;
+}
+
+export interface TaskPreview {
+  request: string;
+  title: string;
+  cadence_minutes: number;
+  source_scope: SourceName[];
+  task_type: "monitor" | "creative";
+  output_format: string | null;
+}
+
+export interface CreateAutonomyTaskResponse {
+  status: string;
+  task: AutonomyTask;
+  result: {
+    status: string;
+    task: AutonomyTask;
+    result: AutonomyRunResponse;
+    output?: string | null;
+    output_error?: string | null;
+  } | null;
+  latest_suggestion: AutonomySuggestion | null;
+  runtime: NemoClawRuntimeStatus;
+}

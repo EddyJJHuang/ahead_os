@@ -33,6 +33,7 @@ from pydantic import BaseModel, Field
 
 import agent  # existing skeleton — reused, not modified
 import pm_agent  # Local PM OS triage agent (run_analysis / ask / generate_draft)
+import pm_autonomy  # NemoClaw-backed autonomous PM monitoring
 import pm_tools  # Local PM OS read + generate tools
 
 app = FastAPI(
@@ -52,6 +53,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.on_event("startup")
+def _start_pm_autonomy_scheduler():
+    """Start the lightweight PM autonomy loop when the API server boots."""
+    pm_autonomy.start_scheduler()
 
 # --------------------------------------------------------------------------- #
 # Schemas — these ARE the frontend contract (also published at /openapi.json) #
@@ -144,7 +151,7 @@ def config():
         "model_id": agent.MODEL_ID,
         "openai_base_url": agent.OPENAI_BASE_URL,
         "mock_base_url": agent.MOCK_BASE_URL,
-        "capabilities": ["chat", "sql", "rag", "pm_agent", "pm_rag", "pm_brief"],
+        "capabilities": ["chat", "sql", "rag", "pm_agent", "pm_rag", "pm_brief", "pm_autonomy"],
         "indexes": {
             "ops_rag": str(agent.RAG_INDEX_PATH),
             "pm_rag": str(agent.PM_RAG_INDEX_PATH),
@@ -332,6 +339,24 @@ class PMBriefRequest(BaseModel):
     question: str = Field(..., examples=["Are we ready to launch? Summarize blockers and next actions."])
 
 
+class PMAutonomyTaskRequest(BaseModel):
+    request: str = Field(
+        ...,
+        examples=[
+            "Every 15 minutes, monitor Jira, GitHub, email, calendar, tasks, and evidence for urgent launch changes."
+        ],
+    )
+
+
+class PMAutonomyRunRequest(BaseModel):
+    trigger: str = Field("manual", description="manual | panel_load | scheduler | task")
+
+
+class PMAutonomyTaskPatch(BaseModel):
+    enabled: Optional[bool] = None
+    cadence_minutes: Optional[int] = None
+
+
 @app.post("/api/pm/analysis", tags=["pm-os"])
 def pm_analysis():
     """Run PM Analysis — the triage workflow. Returns ship-readiness, executive
@@ -391,6 +416,73 @@ def pm_ask_stream(req: PMAskRequest):
 def pm_draft(req: PMDraftRequest):
     """Generate Draft (Panel 2 action buttons): {kind, draft}."""
     return pm_agent.generate_draft(req.kind, req.context)
+
+
+@app.get("/api/pm/autonomy/status", tags=["pm-autonomy"])
+def pm_autonomy_status():
+    """NemoClaw-backed autonomous PM monitor status, tasks and latest suggestion."""
+    return pm_autonomy.get_status()
+
+
+@app.post("/api/pm/autonomy/run", tags=["pm-autonomy"])
+def pm_autonomy_run(req: PMAutonomyRunRequest):
+    """Run the evidence monitor once and update the latest decision suggestion."""
+    return pm_autonomy.run_monitor(trigger=req.trigger)
+
+
+class PMEmergencyToggle(BaseModel):
+    active: bool = Field(True, description="True = inject the emergency overlay; False = restore peacetime.")
+
+
+@app.get("/api/pm/autonomy/emergency", tags=["pm-autonomy"])
+def pm_emergency_status():
+    """Whether the emergency overlay is currently merged into the live dataset."""
+    return {"emergency_active": pm_tools.emergency_active()}
+
+
+@app.post("/api/pm/autonomy/emergency", tags=["pm-autonomy"])
+def pm_emergency_toggle(req: PMEmergencyToggle):
+    """The demo 'trigger'. On activation the emergency/ records merge into the
+    live dataset and the monitor runs once so the AI's emergency suggestion
+    appears immediately; deactivation restores peacetime."""
+    active = pm_tools.set_emergency(req.active)
+    result = pm_autonomy.run_monitor(trigger="emergency" if active else "recovery")
+    return {
+        "emergency_active": active,
+        "suggestion": result.get("suggestion"),
+        "runtime": result.get("runtime"),
+    }
+
+
+@app.get("/api/pm/autonomy/tasks", tags=["pm-autonomy"])
+def pm_autonomy_tasks():
+    """List autonomous PM tasks registered from natural language or defaults."""
+    return {"tasks": pm_autonomy.list_tasks()}
+
+
+@app.post("/api/pm/autonomy/tasks/preview", tags=["pm-autonomy"])
+def pm_autonomy_preview_task(req: PMAutonomyTaskRequest):
+    """Parse a natural-language request into a PROPOSED recurring-task spec WITHOUT
+    creating it — powers the chat confirmation card before the user launches it."""
+    return pm_autonomy.preview_task_request(req.request)
+
+
+@app.post("/api/pm/autonomy/tasks", tags=["pm-autonomy"])
+def pm_autonomy_create_task(req: PMAutonomyTaskRequest):
+    """Create a periodic/autonomous PM task from a natural-language request."""
+    return pm_autonomy.create_task_from_request(req.request)
+
+
+@app.post("/api/pm/autonomy/tasks/{task_id}/run", tags=["pm-autonomy"])
+def pm_autonomy_run_task(task_id: str):
+    """Run one registered autonomous task immediately."""
+    return pm_autonomy.run_task(task_id)
+
+
+@app.patch("/api/pm/autonomy/tasks/{task_id}", tags=["pm-autonomy"])
+def pm_autonomy_update_task(task_id: str, req: PMAutonomyTaskPatch):
+    """Enable/disable a task or change its cadence."""
+    return pm_autonomy.update_task(task_id, enabled=req.enabled, cadence_minutes=req.cadence_minutes)
 
 
 @app.get("/api/pm/sources", tags=["pm-os"])

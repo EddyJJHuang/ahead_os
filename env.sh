@@ -3,6 +3,9 @@
 
 export PMOS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export SSD_ROOT="${SSD_ROOT:-$PMOS_ROOT}"
+# Single source of truth for all demo data (see mock_data/pm_agent/SCHEMA.md).
+# Point this at any directory following that schema to swap the whole dataset.
+export PM_DATA_DIR="${PM_DATA_DIR:-$PMOS_ROOT/mock_data/pm_agent}"
 export OPENAI_BASE_URL="${OPENAI_BASE_URL:-http://localhost:8000/v1}"
 export OPENAI_API_KEY="${OPENAI_API_KEY:-not-needed}"
 export MODEL_ID="${MODEL_ID:-nemotron-super}"

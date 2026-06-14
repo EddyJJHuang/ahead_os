@@ -13,13 +13,19 @@ agent._embed_query (bge ONNX) for RAG. No new dependencies; agent.py unmodified.
 from __future__ import annotations
 
 import json
+import os
+from pathlib import Path
 from typing import Any
 
 import agent  # reuse vLLM client, MODEL_ID, SSD_ROOT, bge embedder
 
-PM_DIR = agent.SSD_ROOT / "mock_data" / "pm_os"
-PM_RAG_INDEX = agent.SSD_ROOT / "rag_pm.faiss"
-PM_RAG_CHUNKS = agent.SSD_ROOT / "rag_pm_chunks.json"
+# Single source of truth for ALL demo data. Everything (panels, analysis,
+# evidence, autonomy, chat) reads from here. Point PM_DATA_DIR at any directory
+# that follows mock_data/pm_agent/SCHEMA.md to swap the entire dataset in one go.
+PM_DIR = Path(os.environ.get("PM_DATA_DIR", str(agent.SSD_ROOT / "mock_data" / "pm_agent")))
+# RAG index over PM_DIR/docs (rebuild with build_index.py after editing docs).
+PM_RAG_INDEX = Path(os.environ.get("PM_RAG_INDEX", str(agent.SSD_ROOT / "rag_pm.faiss")))
+PM_RAG_CHUNKS = Path(os.environ.get("PM_RAG_CHUNKS", str(agent.SSD_ROOT / "rag_pm_chunks.json")))
 
 TODAY = "2026-06-14"
 LAUNCH_TARGET = "2026-06-19"
@@ -35,12 +41,48 @@ _SOURCES = {
 }
 
 # ---------------------------------------------------------------------------
-# Source loading + generic search
+# Two-phase demo data
+#   peacetime/  — always loaded (the normal day).
+#   emergency/  — merged in ONLY while the emergency flag is set, simulating a
+#                 crisis injected by trigger_emergency.sh or the API. This is how
+#                 the demo goes "calm -> trigger -> AI detects & advises".
+# A flat PM_DIR (no peacetime/) is still supported for single-set reference
+# datasets like mock_data/pm_os.
 # ---------------------------------------------------------------------------
+PEACE_DIR = PM_DIR / "peacetime"
+EMERGENCY_DIR = PM_DIR / "emergency"
+EMERGENCY_FLAG = PM_DIR / ".emergency_active"
+
+
+def emergency_active() -> bool:
+    return EMERGENCY_FLAG.exists()
+
+
+def set_emergency(active: bool) -> bool:
+    """Toggle the emergency overlay. Returns the resulting state."""
+    if active:
+        EMERGENCY_FLAG.write_text("on", encoding="utf-8")
+    elif EMERGENCY_FLAG.exists():
+        EMERGENCY_FLAG.unlink()
+    return emergency_active()
+
+
+def _read_records(dirpath: Path, fname: str, key: str) -> tuple[list[dict], dict]:
+    path = dirpath / fname
+    if not path.exists():
+        return [], {}
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return data.get(key, []), data
+
+
 def _load(source: str) -> tuple[list[dict], dict]:
     fname, key = _SOURCES[source]
-    data = json.loads((PM_DIR / fname).read_text(encoding="utf-8"))
-    return data.get(key, []), data
+    base = PEACE_DIR if PEACE_DIR.exists() else PM_DIR  # peacetime layout, else flat
+    recs, meta = _read_records(base, fname, key)
+    if emergency_active():
+        erecs, _ = _read_records(EMERGENCY_DIR, fname, key)
+        recs = recs + erecs
+    return recs, meta
 
 
 def list_sources() -> dict[str, int]:

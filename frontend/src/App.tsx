@@ -1,21 +1,86 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import AskPMOS from "./components/AskPMOS";
 import EvidenceDrawer from "./components/EvidenceDrawer";
 import ExecutiveDecision from "./components/ExecutiveDecision";
+import ScheduledTasksModal from "./components/ScheduledTasksModal";
 import TopActions from "./components/TopActions";
+import {
+  getPmAutonomyStatus,
+  postPmAutonomyRunTask,
+} from "./api/client";
+import type { AutonomyStatusResponse } from "./api/pm_types";
 import { loadPanelData } from "./services/panelData";
 import type { PanelLoadState } from "./types";
+
+// Decision panel re-derives from the live Context sources on this cadence.
+const REFRESH_MS = 25_000;
 
 export default function App() {
   const [panels, setPanels] = useState<PanelLoadState | null>(null);
   const [loading, setLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  useEffect(() => {
-    loadPanelData().then((data) => {
-      setPanels(data);
-      setLoading(false);
-    });
+  const [autonomy, setAutonomy] = useState<AutonomyStatusResponse | null>(null);
+  const [showTasks, setShowTasks] = useState(false);
+  const [runningTaskId, setRunningTaskId] = useState<string | null>(null);
+
+  const inFlight = useRef(false);
+
+  const refreshPanels = useCallback(async (initial = false) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    try {
+      const data = await loadPanelData();
+      // Don't clobber a live view with a transient mock fallback on a poll.
+      setPanels((prev) =>
+        !initial && prev && !prev.usingMockPanels && data.usingMockPanels
+          ? prev
+          : data
+      );
+      if (!data.usingMockPanels || initial) setLastUpdated(new Date());
+    } finally {
+      inFlight.current = false;
+      if (initial) setLoading(false);
+    }
   }, []);
+
+  const refreshAutonomy = useCallback(async () => {
+    const status = await getPmAutonomyStatus();
+    if (status) setAutonomy(status);
+  }, []);
+
+  // Initial load.
+  useEffect(() => {
+    void refreshPanels(true);
+    void refreshAutonomy();
+  }, [refreshPanels, refreshAutonomy]);
+
+  // Periodic refresh — Decision/Context + scheduled-task state stay live.
+  useEffect(() => {
+    const id = setInterval(() => {
+      void refreshPanels();
+      void refreshAutonomy();
+    }, REFRESH_MS);
+    return () => clearInterval(id);
+  }, [refreshPanels, refreshAutonomy]);
+
+  const handleTaskCreated = useCallback(() => {
+    void refreshAutonomy();
+    setShowTasks(true);
+  }, [refreshAutonomy]);
+
+  const handleRunNow = useCallback(
+    async (taskId: string) => {
+      setRunningTaskId(taskId);
+      try {
+        await postPmAutonomyRunTask(taskId);
+        await refreshAutonomy();
+      } finally {
+        setRunningTaskId(null);
+      }
+    },
+    [refreshAutonomy]
+  );
 
   const online = panels?.backendReachable ?? false;
   const agentReady = panels?.backendReachable && panels?.modelReady;
@@ -28,12 +93,19 @@ export default function App() {
         ? "Agent connected"
         : "API up — model loading";
 
+  const tasks = autonomy?.tasks ?? [];
+  const pollSeconds = autonomy?.scheduler?.poll_seconds ?? 20;
+
   const todayLabel = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric",
   });
+
+  const updatedLabel = lastUpdated
+    ? lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : null;
 
   return (
     <div className="app">
@@ -51,19 +123,43 @@ export default function App() {
           <span className="top-nav__date">{todayLabel}</span>
         </div>
 
-        <div className="top-nav__status">
-          <span
-            className={`status-dot ${agentReady ? "" : "status-dot--offline"}`}
-          />
-          {statusLabel}
+        <div className="top-nav__right">
+          <button
+            type="button"
+            className="tasks-pill"
+            onClick={() => setShowTasks(true)}
+            title="Browse recurring tasks running on NemoClaw"
+          >
+            <span className="tasks-pill__icon" aria-hidden>
+              ⏱
+            </span>
+            Scheduled Tasks
+            <span className="tasks-pill__count">{tasks.length}</span>
+          </button>
+
+          <div className="top-nav__status">
+            <span
+              className={`status-dot ${agentReady ? "" : "status-dot--offline"}`}
+            />
+            {statusLabel}
+          </div>
         </div>
       </nav>
 
       <main className="dashboard">
         <section className="panel panel--lavender">
           <header className="panel__header">
-            <div className="panel__label">Decision</div>
-            <div className="panel__title">Executive Decision</div>
+            <div>
+              <div className="panel__label">Decision</div>
+              <div className="panel__title">Executive Decision</div>
+            </div>
+            {online && (
+              <div className="panel__live" title="Re-derived from the Context sources on a timer">
+                <span className="panel__live-dot" />
+                Live · auto-refresh {REFRESH_MS / 1000}s
+                {updatedLabel ? ` · ${updatedLabel}` : ""}
+              </div>
+            )}
           </header>
           <div className="panel__body">
             <ExecutiveDecision
@@ -86,9 +182,7 @@ export default function App() {
                 modelReady={panels.modelReady}
               />
             )}
-            {loading && (
-              <p className="panel-loading">Loading actions…</p>
-            )}
+            {loading && <p className="panel-loading">Loading actions…</p>}
           </div>
         </section>
 
@@ -102,6 +196,7 @@ export default function App() {
               backendReachable={online}
               modelReady={panels?.modelReady ?? false}
               usingMockPanels={panels?.usingMockPanels ?? true}
+              onTaskCreated={handleTaskCreated}
             />
           </div>
         </section>
@@ -112,15 +207,22 @@ export default function App() {
             <div className="panel__title">Context Hub</div>
           </header>
           <div className="panel__body">
-            {!loading && panels && (
-              <EvidenceDrawer items={panels.evidence} />
-            )}
-            {loading && (
-              <p className="panel-loading">Loading evidence…</p>
-            )}
+            {!loading && panels && <EvidenceDrawer items={panels.evidence} />}
+            {loading && <p className="panel-loading">Loading evidence…</p>}
           </div>
         </section>
       </main>
+
+      {showTasks && (
+        <ScheduledTasksModal
+          tasks={tasks}
+          pollSeconds={pollSeconds}
+          runtime={autonomy?.runtime ?? null}
+          onClose={() => setShowTasks(false)}
+          onRunNow={handleRunNow}
+          runningId={runningTaskId}
+        />
+      )}
     </div>
   );
 }

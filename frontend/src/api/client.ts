@@ -1,5 +1,9 @@
 import type {
   AnalysisResponse,
+  AutonomyRunResponse,
+  AutonomyStatusResponse,
+  AutonomyTaskRequest,
+  CreateAutonomyTaskResponse,
   AskResponse,
   AskStreamEvent,
   ChatMessage,
@@ -8,6 +12,8 @@ import type {
   SourceCounts,
   SourceName,
   SourceResponse,
+  TaskPreview,
+  AutonomyTask,
 } from "./pm_types";
 import type { ConfigResponse, HealthResponse } from "./types";
 
@@ -63,6 +69,51 @@ export async function postPmDraft(
   return fetchJSON<DraftResponse>("/api/pm/draft", {
     method: "POST",
     body: JSON.stringify(body),
+  });
+}
+
+export async function getPmAutonomyStatus(): Promise<AutonomyStatusResponse | null> {
+  return fetchJSON<AutonomyStatusResponse>("/api/pm/autonomy/status");
+}
+
+export async function postPmAutonomyRun(body: {
+  trigger?: string;
+} = {}): Promise<AutonomyRunResponse | null> {
+  return fetchJSON<AutonomyRunResponse>("/api/pm/autonomy/run", {
+    method: "POST",
+    body: JSON.stringify({ trigger: body.trigger ?? "manual" }),
+  });
+}
+
+export async function postPmAutonomyTask(
+  body: AutonomyTaskRequest
+): Promise<CreateAutonomyTaskResponse | null> {
+  return fetchJSON<CreateAutonomyTaskResponse>("/api/pm/autonomy/tasks", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+/** Parse a natural-language request into a proposed task spec (no create). */
+export async function postPmAutonomyTaskPreview(
+  request: string
+): Promise<TaskPreview | null> {
+  return fetchJSON<TaskPreview>("/api/pm/autonomy/tasks/preview", {
+    method: "POST",
+    body: JSON.stringify({ request }),
+  });
+}
+
+/** List all registered recurring/autonomous tasks. */
+export async function getPmAutonomyTasks(): Promise<{ tasks: AutonomyTask[] } | null> {
+  return fetchJSON<{ tasks: AutonomyTask[] }>("/api/pm/autonomy/tasks");
+}
+
+/** Run one registered recurring task immediately. */
+export async function postPmAutonomyRunTask(taskId: string): Promise<unknown | null> {
+  return fetchJSON<unknown>(`/api/pm/autonomy/tasks/${taskId}/run`, {
+    method: "POST",
+    body: JSON.stringify({}),
   });
 }
 
