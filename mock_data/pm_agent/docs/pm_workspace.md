@@ -1,6 +1,6 @@
 # Generated PM Workspace Snapshot
 
-Generated from `mock_data/pm_agent/raw/` for local PM launch-readiness retrieval.
+Generated from `mock_data/pm_agent/raw/` and optional private `mock_data/pm_agent/live/` for local PM launch-readiness retrieval.
 
 ## Calender
 
