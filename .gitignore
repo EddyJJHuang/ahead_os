@@ -1,0 +1,13 @@
+# Large bundle assets — provided by the SSD bundle, never committed
+models/
+images/
+wheels/
+repos/
+repos.tar.gz
+mock_data/
+.venv/
+# runtime / logs / caches
+*.log
+__pycache__/
+*.pyc
+.DS_Store

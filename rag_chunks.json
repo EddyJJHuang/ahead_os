@@ -1,0 +1,121 @@
+{
+  "chunks": [
+    "> Internal document. Version 2026.1. Owner: People Operations. Last reviewed: 2026-01-15.",
+    "## 1. About This Handbook\nThis handbook summarizes the policies that apply to all full-time and part-time\nemployees of Meridian Robotics, Inc. (\"Meridian\", \"the Company\"). Where a policy\nconflicts with a signed employment agreement, the signed agreement governs.",
+    "## 2. Working Hours & Remote Work\n- Standard hours are 9:00 AM to 6:00 PM in the employee's local time zone, with a\n  one-hour unpaid lunch.\n- Core collaboration hours, during which all employees must be reachable, are\n  10:00 AM to 3:00 PM Pacific Time.\n- Employees may work remotely up to three (3) days per week. Fully remote\n  arrangements require VP approval and an approved home-office stipend request.\n- Hardware for remote work is provisioned by IT (see the IT Troubleshooting Guide).",
+    "## 3. Paid Time Off (PTO)\n- Full-time employees accrue 1.67 PTO days per month (20 days/year).\n- PTO begins accruing on the first day of employment but may not be used during\n  the first 30 days without manager approval.\n- Unused PTO carries over up to a maximum of 10 days into the next calendar year.\n- PTO requests must be submitted at least five (5) business days in advance through\n  the People Ops tool (`request_pto`). Requests of 10+ consecutive days require\n  director approval.\n- Sick leave is separate from PTO: 8 days/year, no advance notice required.",
+    "## 4. Expense & Reimbursement Policy\n- Pre-approval is required for any single expense over USD 500.\n- Reimbursable: client meals (up to USD 75/person), ground transport, economy\n  airfare, conference fees, and home-office equipment up to USD 1,000/year.\n- Non-reimbursable: alcohol, personal entertainment, traffic fines, first-class\n  airfare.\n- Receipts must be submitted within 30 days of the expense. Reimbursements are\n  paid in the next payroll cycle after approval.",
+    "## 5. Information Security Policy\n- All laptops must use full-disk encryption (enabled by default on IT-provisioned\n  devices) and auto-lock after 5 minutes of inactivity.\n- Multi-factor authentication (MFA) is mandatory for email, VPN, and the code\n  repository.\n- Customer data classified as \"Confidential\" or above must never be copied to\n  personal devices or non-approved cloud storage.\n- Suspected security incidents must be reported within one (1) hour to the\n  Security team via the `create_ticket` tool with category `security_incident`.\n- Passwords must be at least 14 characters and are rotated every 180 days.",
+    "## 6. Code of Conduct\n- Meridian is an equal-opportunity employer and prohibits harassment or\n  discrimination of any kind.\n- Conflicts of interest must be disclosed to People Ops.\n- Confidential information remains confidential for two (2) years after separation.",
+    "## 7. Benefits Summary\n- Medical, dental, and vision coverage effective on the first day of employment.\n- 401(k) with a 4% Company match, vesting immediately.\n- Annual learning & development budget of USD 1,500 per employee.\n- 12 weeks of paid parental leave for all new parents.",
+    "## 8. Escalation & Contacts\n- People / HR questions: People Ops (peopleops@meridian.example).\n- IT / hardware / access: IT Service Desk (see IT Troubleshooting Guide).\n- Security incidents: Security on-call (1-hour SLA).",
+    "## Service Levels (SLA)\n| Priority | Description | First response | Resolution target |\n|----------|-------------|----------------|-------------------|\n| P1 | Outage blocking >25 users or production | 15 min | 4 hours |\n| P2 | Single user fully blocked | 1 hour | 1 business day |\n| P3 | Degraded / workaround exists | 4 hours | 3 business days |\n| P4 | Request / how-to | 1 business day | 5 business days |",
+    "## 1. VPN Connection Issues\nSymptoms: \"Authentication failed\" or client hangs at \"Connecting...\".\n1. Confirm MFA token is current; tokens expire every 30 seconds.\n2. Verify you are on a supported client version (>= 7.2). Older clients fail\n   silently after the 2026-01 gateway upgrade.\n3. Flush DNS: `sudo dscacheutil -flushcache` (macOS) and reconnect.\n4. If error code `VPN-503` appears, the regional gateway is saturated — switch to\n   the secondary gateway in the client dropdown.\n5. Still failing after 10 minutes: open a P2 ticket (`create_ticket`, category\n   `network`).",
+    "## 2. Password Reset / Account Lockout\n- Accounts lock after 6 failed attempts for 15 minutes.\n- Self-service reset is available via the People Ops tool (`reset_password`).\n- A reset invalidates all active sessions; you must re-enroll MFA if the device\n  was wiped.\n- Repeated lockouts (3+ in a day) usually indicate a stale saved credential on a\n  phone mail client — remove and re-add the account.",
+    "## 3. Laptop Provisioning for New Hires\n- IT ships a pre-imaged laptop to arrive on or before the start date.\n- Day-1 setup: connect to corporate Wi-Fi `MeridianCorp`, sign in with the\n  temporary password from the welcome email, then complete MFA enrollment.\n- Full-disk encryption and endpoint protection are pre-installed; do not disable.\n- Software requests beyond the standard image go through `create_ticket`\n  (category `software`, priority P4).",
+    "## 4. Common Error Codes\n| Code | Meaning | Fix |\n|------|---------|-----|\n| VPN-503 | Gateway saturated | Switch to secondary gateway |\n| AUTH-119 | Expired MFA enrollment | Re-enroll MFA in the identity portal |\n| MAIL-42 | Mailbox over quota | Archive or request quota increase (P4) |\n| REPO-401 | Git credential expired | Regenerate token; tokens last 90 days |\n| PRINT-7 | Printer offline | Power-cycle; if persists, P3 ticket |",
+    "## 5. Escalation Matrix\n- Tier 1 (Service Desk) handles P3/P4 and triages everything.\n- Tier 2 (Systems) handles P2 network/identity issues.\n- Tier 3 (Infrastructure on-call) handles P1 outages and `security_incident`.\n- Anything tagged `security_incident` is auto-escalated to Tier 3 with a 1-hour SLA.",
+    "## 6. How the Service Desk Agent Should Behave\n- Always classify the request priority (P1–P4) before acting.\n- For known issues, provide the documented fix first, then offer to open a ticket.\n- Never reset a password or create a ticket without confirming the employee's\n  identity via the `lookup_employee` tool.",
+    "The Meridian Fleet API lets customers manage autonomous-robot fleets programmatically.\nBase URL: `https://api.meridian.example/v3`. All requests require a Bearer token.",
+    "## Authentication\nSend `Authorization: Bearer <API_KEY>`. Tokens are scoped per project. Rate limit:\n600 requests/minute per token; bursts return HTTP 429 with `Retry-After`.",
+    "## Resource: Robots\n- `GET /robots` — list robots. Query params: `status` (idle|active|charging|fault),\n  `site_id`, `page`, `page_size` (max 200).\n- `GET /robots/{robot_id}` — fetch one robot, including battery %, firmware, and\n  last telemetry timestamp.\n- `POST /robots/{robot_id}/commands` — issue a command. Body: `{ \"command\":\n  \"recall\" | \"pause\" | \"resume\", \"reason\": \"<string>\" }`.",
+    "## Resource: Tasks\n- `GET /tasks` — list tasks. Filter by `state` (queued|running|done|failed).\n- `POST /tasks` — create a task. Body: `{ \"robot_id\": \"...\", \"type\": \"pick\" |\n  \"transport\" | \"inspect\", \"payload\": { ... } }`.",
+    "## Resource: Telemetry\n- `GET /telemetry?robot_id=...&since=<iso8601>` — stream of telemetry points.\n  Each point has `battery_pct`, `temp_c`, `error_code` (nullable), `position`.",
+    "## Error Model\nErrors return `{ \"error\": { \"code\": \"<machine_code>\", \"message\": \"<human text>\" } }`.\nCommon codes: `rate_limited` (429), `not_found` (404), `invalid_command` (422),\n`robot_in_fault` (409 — robot must be cleared before new commands).",
+    "## Webhooks\nRegister a webhook to receive `robot.fault`, `task.completed`, and `task.failed`\nevents. Payloads are signed with HMAC-SHA256 in the `X-Meridian-Signature` header."
+  ],
+  "meta": [
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 0
+    },
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 1
+    },
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 2
+    },
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 3
+    },
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 4
+    },
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 5
+    },
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 6
+    },
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 7
+    },
+    {
+      "source": "employee_handbook.md",
+      "chunk_index": 8
+    },
+    {
+      "source": "it_troubleshooting_guide.md",
+      "chunk_index": 0
+    },
+    {
+      "source": "it_troubleshooting_guide.md",
+      "chunk_index": 1
+    },
+    {
+      "source": "it_troubleshooting_guide.md",
+      "chunk_index": 2
+    },
+    {
+      "source": "it_troubleshooting_guide.md",
+      "chunk_index": 3
+    },
+    {
+      "source": "it_troubleshooting_guide.md",
+      "chunk_index": 4
+    },
+    {
+      "source": "it_troubleshooting_guide.md",
+      "chunk_index": 5
+    },
+    {
+      "source": "it_troubleshooting_guide.md",
+      "chunk_index": 6
+    },
+    {
+      "source": "product_api_docs.md",
+      "chunk_index": 0
+    },
+    {
+      "source": "product_api_docs.md",
+      "chunk_index": 1
+    },
+    {
+      "source": "product_api_docs.md",
+      "chunk_index": 2
+    },
+    {
+      "source": "product_api_docs.md",
+      "chunk_index": 3
+    },
+    {
+      "source": "product_api_docs.md",
+      "chunk_index": 4
+    },
+    {
+      "source": "product_api_docs.md",
+      "chunk_index": 5
+    },
+    {
+      "source": "product_api_docs.md",
+      "chunk_index": 6
+    }
+  ]
+}

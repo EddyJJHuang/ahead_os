@@ -1,0 +1,22 @@
+GB10 offline bundle manifest — generated Fri Jun 12 13:44:42 PDT 2026
+target arch: arm64 (linux/arm64), python 3.12
+
+== Top-level sizes ==
+ 24M	./bin
+ 19G	./images
+  0B	./MANIFEST.txt
+109G	./models
+7.9G	./repos
+1.0M	./SHA256SUMS.txt
+543M	./wheels
+
+== File tree (depth 2) ==
+  22805727  ./bin/uv-aarch64-unknown-linux-gnu.tar.gz
+       102  ./bin/uv-aarch64-unknown-linux-gnu.tar.gz.sha256
+11515088503  ./images/avarok_vllm-dgx-spark_latest.tar.gz
+2526433273  ./images/ghcr.io_ggml-org_llama.cpp_server-cuda.tar.gz
+  30855055  ./images/ghcr.io_nvidia_openshell_gateway_latest.tar.gz
+6248431386  ./images/nvcr.io_nvidia_vllm_26.01-py3.tar.gz
+       430  ./images/PINNED_DIGESTS.txt
+       276  ./MANIFEST.txt
+      4209  ./SHA256SUMS.txt
