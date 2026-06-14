@@ -1,6 +1,9 @@
 /**
- * Client-side demo data for PM OS panels.
- * TODO: POST /api/triage | POST /api/draft | GET /api/evidence
+ * Offline fallback ONLY. The live demo renders /api/pm/* (computed on the GB10).
+ * This data is shown when the backend is unreachable, so it MUST tell the same
+ * Enterprise Checkout story as the real engine (pm_agent.py + mock_data/pm_os):
+ * P0 bugs CHK-101/102/103, unreviewed launch PR-88, Globex/Amex escalation,
+ * no QA sign-off (TASK-2), stakeholder comms not sent (TASK-4) -> delay to 06-23.
  */
 
 import type {
@@ -11,116 +14,133 @@ import type {
 } from "../types";
 
 export const DEMO_EXECUTIVE: ExecutiveDecisionData = {
-  headline: "Can we ship Friday?",
+  headline: "Enterprise Checkout launch is AT RISK",
   ship_readiness: "NO",
-  recommendation: "Delay launch 2 days",
+  recommendation: "Delay launch from 2026-06-19 to 2026-06-23",
   risk_level: "Critical",
   evidence_strength: "Strong",
-  evidence_sources: ["Jira", "GitHub", "Email", "Calendar"],
+  evidence_sources: ["Jira", "GitHub", "Email", "Calendar", "Tasks"],
   summary:
-    "No — 3 P1 bugs block QA sign-off, PR-88 needs security re-review, and an enterprise customer requires 48h compliance review.",
+    "No — 2 open P0 payment bugs (CHK-101 Amex failure, CHK-102 double-charge), an unreviewed launch PR-88, and no scheduled QA sign-off mean the launch criteria are not met. Recommend slipping to 2026-06-23 and clearing the blockers.",
 };
 
 export const DEMO_ACTIONS: ActionItem[] = [
   {
-    id: "action-1",
-    title: "Schedule QA review",
+    id: "act-qa",
+    title: "Schedule checkout QA review",
     impact: "High",
-    effort: "Low",
+    effort: "5 min",
+    rationale: "QA sign-off is a hard launch gate and nothing is on the calendar (TASK-2).",
+    draft_kind: "slack_update",
+    context:
+      "Ask Sarah (QA Lead) to book a full-day Enterprise Checkout QA pass before the Go/No-Go on 2026-06-18. Covers Amex, multi-currency VAT, payment retry, PO billing. Blocks TASK-2.",
   },
   {
-    id: "action-2",
-    title: "Request PR-88 re-review",
-    impact: "Critical",
-    effort: "Medium",
+    id: "act-pr",
+    title: "Request review on PR-88",
+    impact: "High",
+    effort: "2 min",
+    rationale: "PR-88 is the launch PR (CHK-110) and has had no review.",
+    draft_kind: "slack_update",
+    context:
+      "Ping the requested reviewers to review PR-88 today — it blocks the Enterprise Checkout launch story.",
   },
   {
-    id: "action-3",
-    title: "Send stakeholder update",
+    id: "act-cust",
+    title: "Reply to Globex escalation",
     impact: "High",
-    effort: "Low",
+    effort: "5 min",
+    rationale: "Churn-sensitive enterprise account escalating on the Amex failure (CHK-101).",
+    draft_kind: "stakeholder_email",
+    context:
+      "Reply re: the Amex checkout failure (CHK-101). Acknowledge the issue, commit to a fix timeline, and reassure on the double-charge safeguard. Account: Globex.",
   },
 ];
 
 export const DEMO_EVIDENCE: EvidenceItem[] = [
   {
-    id: "demo-jira-1",
+    id: "demo-jira-101",
     source: "Jira",
-    title: "PROJ-442 — QA sign-off blocked",
-    snippet:
-      "Regression suite failed on checkout flow. 3 P1 bugs open. QA lead marked release as blocked.",
+    title: "CHK-101 — Amex checkout failure (HTTP 500)",
+    snippet: "2 open P0 payment bug(s) block the launch",
     detail:
-      "Issue PROJ-442 was updated 2 hours ago by Sarah Chen (QA Lead). Status: Blocked. P1 bugs: PROJ-438, 439, 441.",
+      "Why it matters: Amex transactions fail at checkout with a 500. Open P0.\n\nMitigation: Resolve CHK-101 before shipping; never ship payments with open P0s.",
     severity: "critical",
     origin: "demo",
   },
   {
-    id: "demo-github-1",
+    id: "demo-jira-102",
+    source: "Jira",
+    title: "CHK-102 — Double-charge on payment retry",
+    snippet: "2 open P0 payment bug(s) block the launch",
+    detail:
+      "Why it matters: Retried payments can charge the customer twice. Open P0.\n\nMitigation: Resolve CHK-102 and verify the idempotency safeguard before shipping.",
+    severity: "critical",
+    origin: "demo",
+  },
+  {
+    id: "demo-github-88",
     source: "GitHub",
-    title: "PR #88 — Auth refactor (changes requested)",
-    snippet:
-      "Security review flagged token refresh logic. Reviewer requested re-review before merge.",
+    title: "PR-88 — Enterprise Checkout launch PR (unreviewed)",
+    snippet: "Launch PR-88 unreviewed and blocking the launch story",
     detail:
-      "Pull Request #88 has changes requested from security review. Blocks hotfix PR-91.",
-    severity: "critical",
-    origin: "demo",
-  },
-  {
-    id: "demo-email-1",
-    source: "Email",
-    title: "Re: Friday launch — Enterprise customer concern",
-    snippet:
-      "Acme Corp VP asking for SLA guarantee on new auth flow. Needs written confirmation.",
-    detail:
-      "Acme Corp needs 48 hours minimum for SOC2 compliance review before approving upgrade.",
+      "Why it matters: PR-88 implements the launch story (CHK-110) and has had no review.\n\nMitigation: Request review and merge; it blocks the launch.",
     severity: "high",
     origin: "demo",
   },
   {
-    id: "demo-calendar-1",
-    source: "Calendar",
-    title: "Launch Go/No-Go — Friday 10:00 AM",
-    snippet:
-      "Stakeholder meeting scheduled. Agenda: ship decision, risk review, comms plan.",
+    id: "demo-email-globex",
+    source: "Email",
+    title: "EM-2001 — Globex escalation on Amex failures",
+    snippet: "Escalating enterprise customer: Globex",
     detail:
-      "Launch Go/No-Go Meeting — Friday 10:00 AM with VP Product, VP Eng, QA Lead.",
-    severity: "medium",
+      "Why it matters: Globex is a churn-sensitive enterprise account escalating on CHK-101.\n\nMitigation: Reply today tying resolution to CHK-101.",
+    severity: "high",
     origin: "demo",
   },
   {
-    id: "demo-tasks-1",
-    source: "Tasks",
-    title: "Update launch comms template",
-    snippet:
-      "Draft stakeholder email pending PM review. Blocked on ship decision.",
+    id: "demo-calendar-gap",
+    source: "Calendar",
+    title: "GAP — No 'Checkout QA Review' scheduled",
+    snippet: "QA sign-off cannot happen — no QA review scheduled",
     detail:
-      "Task blocked — waiting on ship/no-ship decision. Need both ship and delay versions.",
-    severity: "low",
+      "Why it matters: QA sign-off is a launch gate and nothing is on the calendar before the Go/No-Go.\n\nMitigation: Schedule a full-day checkout QA review before 2026-06-18.",
+    severity: "high",
+    origin: "demo",
+  },
+  {
+    id: "demo-tasks-4",
+    source: "Tasks",
+    title: "TASK-4 — Send stakeholder launch update",
+    snippet: "Stakeholder launch communication not sent",
+    detail:
+      "Why it matters: Stakeholder comms is a launch checklist item and not started.\n\nMitigation: Send a status update to affected accounts and internal stakeholders.",
+    severity: "medium",
     origin: "demo",
   },
 ];
 
 export const DEMO_DRAFTS: Record<string, DraftContent> = {
-  "action-1": {
-    action_id: "action-1",
-    action_title: "Schedule QA review",
-    subject: "QA War Room — Today 2 PM",
+  "act-qa": {
+    action_id: "act-qa",
+    action_title: "Schedule checkout QA review",
+    subject: "QA review needed before Go/No-Go (06-18)",
     body:
-      "Team,\n\nWe need a focused QA session today at 2 PM to triage the 3 remaining P1 bugs blocking release sign-off.\n\n— PM",
+      "@sarah Can we book a full-day Enterprise Checkout QA pass before the Go/No-Go on 2026-06-18?\n\n• Scope: Amex, multi-currency VAT, payment retry, PO billing\n• Blocks: TASK-2 (QA sign-off) and the launch decision\n\n— PM",
   },
-  "action-2": {
-    action_id: "action-2",
-    action_title: "Request PR-88 re-review",
-    subject: "PR-88 Security Re-Review Request",
+  "act-pr": {
+    action_id: "act-pr",
+    action_title: "Request review on PR-88",
+    subject: "PR-88 needs review today",
     body:
-      "@alex-kim @security-bot\n\nPR-88 needs a security re-review before we can merge.\n\n— PM",
+      "Heads up — PR-88 (the Enterprise Checkout launch PR, CHK-110) has had no review and is blocking the launch story. Can a reviewer take a look today?\n\n— PM",
   },
-  "action-3": {
-    action_id: "action-3",
-    action_title: "Send stakeholder update",
-    subject: "Launch Update — Revised Timeline",
+  "act-cust": {
+    action_id: "act-cust",
+    action_title: "Reply to Globex escalation",
+    subject: "Re: Enterprise Checkout — Amex failures",
     body:
-      "Hi team,\n\nAfter reviewing overnight signals, we've decided to delay the launch by 2 days to ensure quality and compliance.\n\n— Product",
+      "Hi,\n\nThanks for flagging the Amex checkout failures. We've reproduced the issue (CHK-101) and are prioritizing a fix; I'll follow up with a firm timeline. We've also added a safeguard against double-charges on retries.\n\nWe'd rather slip the launch a couple of days than ship a payment regression — I'll keep you posted.\n\n— PM",
   },
 };
 
@@ -129,11 +149,11 @@ export const DEMO_CHAT_OFFLINE =
 
 export const DEMO_CHAT_FALLBACK: Record<string, string> = {
   "can we ship friday":
-    "No — QA sign-off is blocked (3 P1 bugs), PR-88 needs security re-review, and Acme Corp requires 48h compliance review. Recommend delaying 2 days.",
+    "No — 2 P0 payment bugs are open (CHK-101 Amex failure, CHK-102 double-charge), launch PR-88 is unreviewed, and there's no QA sign-off scheduled. Recommend delaying from 2026-06-19 to 2026-06-23.",
   "what changed overnight":
-    "Overnight: PROJ-442 marked Blocked, PR-88 received changes requested, Acme Corp emailed about SOC2, QA War Room scheduled for 2 PM.",
+    "Globex escalated again on the Amex checkout failure (CHK-101), and the launch PR-88 has still had no review. The 2 P0 payment bugs remain open with the launch this week.",
   "what is blocking launch":
-    "Three blockers: (1) 3 P1 checkout bugs blocking QA signoff, (2) PR-88 security re-review, (3) enterprise compliance review.",
+    "Three blockers: (1) open P0 payment bugs CHK-101/CHK-102, (2) unreviewed launch PR-88, (3) no QA sign-off scheduled (TASK-2). Stakeholder comms (TASK-4) is also not sent.",
 };
 
 export const LOADING_TRACE = [

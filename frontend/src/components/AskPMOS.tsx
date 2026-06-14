@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { postChat, postChatStream } from "../api/client";
+import { postPmAsk, postPmAskStream } from "../api/client";
 import type { ChatMessage } from "../api/types";
 import { DEMO_CHAT_FALLBACK, DEMO_CHAT_OFFLINE } from "../mock/demoData";
 import AgentTrace from "./AgentTrace";
@@ -49,7 +49,7 @@ export default function AskPMOS() {
       let answer = "";
       const steps: string[] = [];
 
-      await postChatStream({ messages: nextHistory }, (event) => {
+      await postPmAskStream({ messages: nextHistory }, (event) => {
         if (event.type === "token") {
           answer += event.text;
           setStreamingText(answer);
@@ -69,7 +69,7 @@ export default function AskPMOS() {
       setHistory((prev) => [...prev, { role: "assistant", content: answer }]);
     } catch {
       try {
-        const res = await postChat({ messages: nextHistory });
+        const res = await postPmAsk({ messages: nextHistory });
         if (res?.answer) {
           setBackendLive(true);
           setDisplay((prev) => [...prev, { role: "assistant", text: res.answer }]);

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { postDraft } from "../api/client";
 import type { ActionItem, DraftContent } from "../types";
 import { DEMO_DRAFTS } from "../mock/demoData";
 import DraftModal from "./DraftModal";
@@ -7,22 +8,55 @@ interface TopActionsProps {
   actions: ActionItem[];
 }
 
+/** Split an LLM draft into a subject line + body (emails start with "Subject:"). */
+function toDraftContent(action: ActionItem, text: string): DraftContent {
+  const trimmed = text.trim();
+  const match = trimmed.match(/^subject:\s*(.+?)\n([\s\S]*)$/i);
+  if (match) {
+    return {
+      action_id: action.id,
+      action_title: action.title,
+      subject: match[1].trim(),
+      body: match[2].trim(),
+    };
+  }
+  return {
+    action_id: action.id,
+    action_title: action.title,
+    subject: action.title,
+    body: trimmed,
+  };
+}
+
 export default function TopActions({ actions }: TopActionsProps) {
   const [draft, setDraft] = useState<DraftContent | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const handleDraft = async (action: ActionItem) => {
     setLoadingId(action.id);
-    // TODO: POST /api/draft
-    await new Promise((r) => setTimeout(r, 350));
-    setDraft(
-      DEMO_DRAFTS[action.id] ?? {
-        action_id: action.id,
-        action_title: action.title,
-        subject: `Draft: ${action.title}`,
-        body: `Draft for "${action.title}".\n\n— PM`,
-      }
-    );
+    let content: DraftContent | null = null;
+
+    // Live: generate on the GB10 from the action's evidence context.
+    if (action.draft_kind && action.context) {
+      const res = await postDraft({
+        kind: action.draft_kind,
+        context: action.context,
+      });
+      if (res?.draft) content = toDraftContent(action, res.draft);
+    }
+
+    // Offline fallback only.
+    if (!content) {
+      content =
+        DEMO_DRAFTS[action.id] ?? {
+          action_id: action.id,
+          action_title: action.title,
+          subject: action.title,
+          body: "Draft unavailable offline — start the backend (bash serve.sh).",
+        };
+    }
+
+    setDraft(content);
     setLoadingId(null);
   };
 

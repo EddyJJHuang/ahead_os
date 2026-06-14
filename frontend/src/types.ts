@@ -17,6 +17,9 @@ export interface ActionItem {
   impact: string;
   effort: string;
   rationale?: string;
+  /** Draft generator + its context — wires the "Generate draft" button to /api/pm/draft. */
+  draft_kind?: string;
+  context?: string;
 }
 
 export interface DraftContent {
