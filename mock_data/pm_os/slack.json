@@ -1,0 +1,45 @@
+{
+  "as_of": "2026-06-14",
+  "messages": [
+    {
+      "channel": "#checkout-launch",
+      "user": "sarah",
+      "role": "QA Lead",
+      "ts": "2026-06-13T09:12:00",
+      "text": "Heads up: nobody has scheduled the checkout QA pass with me. I need a full day before any launch sign-off, and there's nothing on my calendar.",
+      "links": {"tasks": ["TASK-2"]}
+    },
+    {
+      "channel": "#checkout-launch",
+      "user": "raj",
+      "role": "Eng",
+      "ts": "2026-06-13T10:01:00",
+      "text": "PR-88 (Enterprise Checkout v2) has been waiting on review for 5 days. @sarah @mike can one of you take a look? It's the launch blocker.",
+      "links": {"github": ["PR-88"]}
+    },
+    {
+      "channel": "#checkout-launch",
+      "user": "lena",
+      "role": "Eng",
+      "ts": "2026-06-13T11:20:00",
+      "text": "CHK-101 (Amex 500) and CHK-102 (double charge) are still open. CHK-102 is risky — it can double-charge customers. I wouldn't ship payments with these open.",
+      "links": {"jira": ["CHK-101", "CHK-102"]}
+    },
+    {
+      "channel": "#checkout-launch",
+      "user": "dana",
+      "role": "PM",
+      "ts": "2026-06-13T16:30:00",
+      "text": "Go/No-Go is Thursday 3pm. I need a straight answer Thursday morning on whether Friday is real.",
+      "links": {"calendar": ["EV-1"]}
+    },
+    {
+      "channel": "#general",
+      "user": "hr",
+      "role": "People",
+      "ts": "2026-06-13T14:00:00",
+      "text": "Reminder: benefits enrollment closes next Friday.",
+      "links": {}
+    }
+  ]
+}

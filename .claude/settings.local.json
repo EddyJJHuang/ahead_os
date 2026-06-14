@@ -1,5 +1,4 @@
 {
-  "_comment": "Pre-approved permissions for Claude Code during the GB10 hackathon. Copy this folder to $HOME/hack/.claude/ on the GB10. Pre-approving common bash patterns avoids permission prompts that would slow down rapid iteration.",
   "permissions": {
     "allow": [
       "Bash(docker images*)",
@@ -49,7 +48,9 @@
       "Bash(pgrep *)",
       "Read(/mnt/ssd/Hackathon/**)",
       "Read(/home/*/hack/**)",
-      "Read(/root/hack/**)"
+      "Read(/root/hack/**)",
+      "Bash(grep -rIil \"nemoclaw\\\\|nemo_claw\\\\|nemo-claw\" --exclude-dir=.git --exclude-dir=.venv --exclude-dir=repos --exclude=\"repos.tar.gz\" .)",
+      "Bash(echo \"=== exit $? ===\")"
     ],
     "deny": [
       "Bash(rm -rf /*)",
@@ -62,5 +63,6 @@
       "Bash(curl * | sh*)",
       "Bash(* > /dev/sd*)"
     ]
-  }
+  },
+  "_comment": "Pre-approved permissions for Claude Code during the GB10 hackathon. Copy this folder to $HOME/hack/.claude/ on the GB10. Pre-approving common bash patterns avoids permission prompts that would slow down rapid iteration."
 }

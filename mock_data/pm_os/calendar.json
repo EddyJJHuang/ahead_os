@@ -1,0 +1,43 @@
+{
+  "as_of": "2026-06-14",
+  "owner": "dana@meridian.com",
+  "events": [
+    {
+      "id": "EV-1",
+      "title": "Enterprise Checkout — Launch Go/No-Go",
+      "start": "2026-06-18T15:00:00",
+      "end": "2026-06-18T15:30:00",
+      "type": "review",
+      "attendees": ["dana@meridian.com", "raj@meridian.com", "sarah@meridian.com", "vp-product@meridian.com"],
+      "note": "Decision meeting. Requires QA sign-off + zero open P0s to be a 'Go'."
+    },
+    {
+      "id": "EV-2",
+      "title": "Enterprise Checkout — Launch",
+      "start": "2026-06-19T10:00:00",
+      "end": "2026-06-19T11:00:00",
+      "type": "launch",
+      "attendees": ["dana@meridian.com", "raj@meridian.com", "marketing@meridian.com"],
+      "note": "Planned public launch. Target date."
+    },
+    {
+      "id": "EV-3",
+      "title": "Sprint Review",
+      "start": "2026-06-16T13:00:00",
+      "end": "2026-06-16T14:00:00",
+      "type": "ceremony",
+      "attendees": ["dana@meridian.com", "raj@meridian.com", "lena@meridian.com"],
+      "note": "Routine."
+    },
+    {
+      "id": "EV-4",
+      "title": "1:1 Dana / VP Product",
+      "start": "2026-06-17T09:00:00",
+      "end": "2026-06-17T09:30:00",
+      "type": "meeting",
+      "attendees": ["dana@meridian.com", "vp-product@meridian.com"],
+      "note": "Routine."
+    }
+  ],
+  "_gap_note": "There is NO 'Checkout QA Review' event on the calendar before the Go/No-Go or Launch — QA sign-off (TASK-2) cannot happen without one."
+}

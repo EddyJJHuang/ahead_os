@@ -57,9 +57,12 @@ SSD_ROOT = _detect_ssd_root()
 BGE_DIR = SSD_ROOT / "models" / "bge-large-en-v1.5"
 ONNX_PATH = BGE_DIR / "onnx" / "model.onnx"
 TOK_PATH = BGE_DIR / "tokenizer.json"
-DOCS_DIR = SSD_ROOT / "mock_data" / "ops_agent"
-INDEX_OUT = SSD_ROOT / "rag_index.faiss"
-CHUNKS_OUT = SSD_ROOT / "rag_chunks.json"
+# Docs dir + output paths are env-overridable so the same pipeline can build
+# multiple indices (e.g. the PM OS KB):
+#   RAG_DOCS_DIR=mock_data/pm_os/docs RAG_INDEX_OUT=rag_pm.faiss RAG_CHUNKS_OUT=rag_pm_chunks.json python build_index.py
+DOCS_DIR = Path(os.environ.get("RAG_DOCS_DIR", SSD_ROOT / "mock_data" / "ops_agent"))
+INDEX_OUT = Path(os.environ.get("RAG_INDEX_OUT", SSD_ROOT / "rag_index.faiss"))
+CHUNKS_OUT = Path(os.environ.get("RAG_CHUNKS_OUT", SSD_ROOT / "rag_chunks.json"))
 
 CHUNK_MIN_LEN = int(os.environ.get("CHUNK_MIN_LEN", "80"))
 CHUNK_MAX_LEN = int(os.environ.get("CHUNK_MAX_LEN", "1200"))

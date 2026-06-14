@@ -1,0 +1,62 @@
+{
+  "as_of": "2026-06-14",
+  "messages": [
+    {
+      "id": "EM-2001",
+      "thread_id": "THREAD-GLOBEX-CHECKOUT",
+      "from": "priya.menon@globex.com",
+      "to": ["alex.kim@meridian.com"],
+      "cc": ["dana@meridian.com"],
+      "subject": "RE: Checkout still failing for our team — third report",
+      "date": "2026-06-12",
+      "priority": "high",
+      "escalation": true,
+      "sentiment": "negative",
+      "account": "Globex (Enterprise, $480k ARR)",
+      "body": "Alex — this is the third time I'm raising this. Half of my team still cannot complete checkout on corporate Amex cards; they get an error after entering payment. We were told this would be fixed last week. We are evaluating whether to pause our rollout. Please advise today.",
+      "links": {"jira": ["CHK-101"]}
+    },
+    {
+      "id": "EM-2000",
+      "thread_id": "THREAD-GLOBEX-CHECKOUT",
+      "from": "alex.kim@meridian.com",
+      "to": ["priya.menon@globex.com"],
+      "subject": "RE: Checkout still failing for our team",
+      "date": "2026-06-09",
+      "priority": "normal",
+      "escalation": false,
+      "sentiment": "neutral",
+      "account": "Globex (Enterprise, $480k ARR)",
+      "body": "Hi Priya — thanks for flagging. Engineering is investigating the Amex capture error and we expect a fix this week.",
+      "links": {"jira": ["CHK-101"]}
+    },
+    {
+      "id": "EM-1999",
+      "thread_id": "THREAD-LAUNCH-INTERNAL",
+      "from": "dana@meridian.com",
+      "to": ["raj@meridian.com", "sarah@meridian.com"],
+      "subject": "Enterprise Checkout — are we go for Friday?",
+      "date": "2026-06-13",
+      "priority": "high",
+      "escalation": false,
+      "sentiment": "concerned",
+      "account": "internal",
+      "body": "Team — Go/No-Go is Thursday. I'm seeing open P0s and PR-88 still not reviewed. Can we realistically ship Friday, or do we need to move the date? Need a clear read by EOD Thursday.",
+      "links": {"jira": ["CHK-101", "CHK-102", "CHK-110"]}
+    },
+    {
+      "id": "EM-1998",
+      "thread_id": "THREAD-WEEKLY",
+      "from": "newsletter@meridian.com",
+      "to": ["all@meridian.com"],
+      "subject": "Weekly Engineering Digest",
+      "date": "2026-06-13",
+      "priority": "low",
+      "escalation": false,
+      "sentiment": "neutral",
+      "account": "internal",
+      "body": "Highlights from the week across all teams. (Routine — not launch related.)",
+      "links": {}
+    }
+  ]
+}

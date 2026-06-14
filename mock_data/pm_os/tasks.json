@@ -1,0 +1,58 @@
+{
+  "as_of": "2026-06-14",
+  "checklist": "Enterprise Checkout Launch",
+  "tasks": [
+    {
+      "id": "TASK-1",
+      "title": "Resolve all open P0 checkout bugs",
+      "status": "in_progress",
+      "owner": "raj@meridian.com",
+      "due": "2026-06-18",
+      "priority": "P0",
+      "category": "launch-checklist",
+      "links": {"jira": ["CHK-101", "CHK-102", "CHK-103"]}
+    },
+    {
+      "id": "TASK-2",
+      "title": "QA sign-off on Enterprise Checkout",
+      "status": "not_started",
+      "owner": "sarah@meridian.com",
+      "due": "2026-06-18",
+      "priority": "P0",
+      "category": "launch-checklist",
+      "links": {"calendar": []},
+      "note": "Blocked: no QA review scheduled on the calendar."
+    },
+    {
+      "id": "TASK-3",
+      "title": "Merge PR-88 (Enterprise Checkout v2)",
+      "status": "blocked",
+      "owner": "raj@meridian.com",
+      "due": "2026-06-17",
+      "priority": "P0",
+      "category": "launch-checklist",
+      "links": {"github": ["PR-88"]},
+      "note": "Blocked on code review."
+    },
+    {
+      "id": "TASK-4",
+      "title": "Send stakeholder launch update",
+      "status": "not_started",
+      "owner": "dana@meridian.com",
+      "due": "2026-06-18",
+      "priority": "P1",
+      "category": "launch-checklist",
+      "links": {}
+    },
+    {
+      "id": "TASK-5",
+      "title": "Finalize rollback runbook",
+      "status": "done",
+      "owner": "lena@meridian.com",
+      "due": "2026-06-11",
+      "priority": "P2",
+      "category": "launch-checklist",
+      "links": {}
+    }
+  ]
+}

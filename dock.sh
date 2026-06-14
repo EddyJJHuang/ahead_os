@@ -64,7 +64,7 @@ case "${1:-}" in
         --served-model-name nemotron-super \
         --tensor-parallel-size 1 \
         --kv-cache-dtype fp8 \
-        --max-model-len 4096 \
+        --max-model-len 16384 \
         --gpu-memory-utilization 0.85 \
         --trust-remote-code \
         --mamba-ssm-cache-dtype float32 \

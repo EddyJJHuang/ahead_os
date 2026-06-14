@@ -1,0 +1,116 @@
+{
+  "chunks": [
+    "## What we do\nMeridian is a B2B commerce platform. Customers run their storefronts and checkout on us. Revenue mix is moving from SMB to enterprise accounts with six-figure ARR.",
+    "## Key accounts\n- **Globex** — Enterprise, ~$480k ARR. Pays on corporate Amex. Currently rolling out to their team and hitting the Amex checkout failure (see CHK-101 / EM-2001). High churn sensitivity right now.\n- **Initech, Soylent** — mid-market expansion accounts watching the enterprise checkout launch.",
+    "## Teams & owners\n- **Dana** — PM, Enterprise Checkout (launch owner).\n- **Raj** — Eng lead, checkout/payments.\n- **Lena** — Eng, payments & UI.\n- **Sarah** — QA lead (sign-off authority for launches).\n- **Alex Kim** — Account manager for Globex.\n- **VP Product** — Go/No-Go approver.",
+    "## Operating norms\n- Launches go through a Go/No-Go review with explicit criteria.\n- P0 = production-blocking or revenue/data-integrity risk; P0s in payments block launches.\n- QA sign-off is mandatory for any payment-path change.\n- Communication to affected enterprise accounts precedes customer-visible launches.",
+    "## Overview\nEnterprise Checkout v2 adds multi-seat purchasing and PO-based billing for our largest accounts. Target launch date is **Friday, 2026-06-19**, with a **Go/No-Go review on Thursday, 2026-06-18 at 3:00pm**.",
+    "## Go / No-Go Criteria (all must be GREEN to ship)\nA launch is **GO only if every one of these is satisfied**. Any unmet criterion makes the launch a **NO-GO**.",
+    "1. **Zero open P0 bugs** in the `checkout` component. P0s in payments are absolute blockers — we never ship payment changes with open P0s.\n2. **QA sign-off complete.** The QA lead must run a full checkout regression pass (Amex, multi-currency, retry, PO billing) and explicitly sign off. This requires a scheduled QA review on the calendar at least one business day before launch.\n3. **All launch PRs merged.** The launch story CHK-110 depends on PR-88; it must be reviewed, approved, and merged. No launch-blocking PR may be open.\n4. **Stakeholder communication sent.** Affected enterprise accounts and internal stakeholders must receive a launch notice before go-live.",
+    "## Rollback Plan\nIf checkout error rate exceeds 2% or any P0 is discovered post-launch, revert via feature flag `checkout_v2_enabled=false` and fall back to v1. The rollback runbook (TASK-5) is finalized.",
+    "## Decision Authority\nThe PM (Dana) recommends; the VP of Product approves at the Go/No-Go. If criteria are not met, the default action is to **delay to the next available launch window (Tuesday 2026-06-23)** rather than ship at risk.",
+    "## Risk Posture\nThis launch is customer-visible and payment-related. We bias toward delaying over shipping a broken checkout: a 2-day slip is recoverable; a payment incident with an enterprise account is not.",
+    "## Thesis\nOur growth is shifting from SMB self-serve to **enterprise**. Enterprise buyers need multi-seat purchasing, purchase-order billing, and predictable, auditable checkout. Enterprise Checkout v2 is the keystone of this motion for H1.",
+    "## Why now\nSales is increasingly blocked by manual order processing for large accounts. Every enterprise deal that requires a manual invoice adds days to close and burdens finance. Self-serve enterprise checkout removes that friction and is the top revenue lever this half.",
+    "## Principles\n- **Trust over speed in payments.** A checkout that occasionally double-charges destroys enterprise trust faster than a late feature wins it. We delay before we ship payment risk.\n- **Evidence-based launches.** We ship on criteria, not calendar pressure. The launch date serves the criteria, not the reverse.\n- **Local-first operations.** Sensitive customer and revenue data stays on-device; our internal tooling (including this PM OS) runs locally.",
+    "## Positioning\nEnterprise Checkout is how Meridian competes upmarket against incumbents whose enterprise billing is clunky. Reliability and auditability are the differentiators, not feature count.",
+    "## Q2 (current)\n- **Enterprise Checkout v2** — multi-seat + PO billing. **In flight; launch targeted 2026-06-19.** Highest priority.\n- Payment reliability hardening — Amex coverage in regression suite (CHK-104), structured capture logging (PR-91).\n- EU tax correctness — multi-currency VAT (CHK-103).",
+    "## Q3 (next)\n- Usage-based billing for enterprise.\n- Self-serve seat management portal.\n- Checkout analytics dashboard for account managers.",
+    "## Dependencies & sequencing\nEnterprise Checkout v2 must land cleanly before usage-based billing — billing builds on the v2 checkout primitives. A slip in v2 cascades into Q3. This is why launch *quality* matters more than hitting the exact Friday date: a 2-day delay is contained, but shipping a broken v2 would force a rollback and a multi-week reset.",
+    "## Themes\n1. Move upmarket (enterprise reliability).\n2. Payments trust (zero double-charge, high auth success).\n3. Local-first internal operations.",
+    "## Launch Health Gates (first 72 hours)\n- **Payment success rate ≥ 98.5%** across all card types, including Amex. Below this, treat as an incident.\n- **Checkout completion rate ≥ 70%** for enterprise carts.\n- **Zero double-charge events.** Any double charge is a Sev-1 and triggers rollback.\n- **Checkout p95 latency < 1200ms.**",
+    "## North-Star & Business Metrics\n- Enterprise checkout-attributed revenue (monthly).\n- Average order value for multi-seat PO purchases.\n- Reduction in sales-assisted manual orders (self-serve adoption).",
+    "## Guardrail Metrics\n- Refund/chargeback rate must not increase vs. v1 baseline.\n- Support ticket volume for \"checkout\" must not increase week-over-week post launch.",
+    "## Why Amex matters\nSeveral of our largest accounts (e.g., Globex) pay exclusively on corporate Amex. An Amex capture failure (CHK-101) directly blocks revenue from top accounts and is therefore a launch blocker, not a cosmetic bug."
+  ],
+  "meta": [
+    {
+      "source": "company_context.md",
+      "chunk_index": 0
+    },
+    {
+      "source": "company_context.md",
+      "chunk_index": 1
+    },
+    {
+      "source": "company_context.md",
+      "chunk_index": 2
+    },
+    {
+      "source": "company_context.md",
+      "chunk_index": 3
+    },
+    {
+      "source": "launch_plan.md",
+      "chunk_index": 0
+    },
+    {
+      "source": "launch_plan.md",
+      "chunk_index": 1
+    },
+    {
+      "source": "launch_plan.md",
+      "chunk_index": 2
+    },
+    {
+      "source": "launch_plan.md",
+      "chunk_index": 3
+    },
+    {
+      "source": "launch_plan.md",
+      "chunk_index": 4
+    },
+    {
+      "source": "launch_plan.md",
+      "chunk_index": 5
+    },
+    {
+      "source": "product_strategy.md",
+      "chunk_index": 0
+    },
+    {
+      "source": "product_strategy.md",
+      "chunk_index": 1
+    },
+    {
+      "source": "product_strategy.md",
+      "chunk_index": 2
+    },
+    {
+      "source": "product_strategy.md",
+      "chunk_index": 3
+    },
+    {
+      "source": "roadmap.md",
+      "chunk_index": 0
+    },
+    {
+      "source": "roadmap.md",
+      "chunk_index": 1
+    },
+    {
+      "source": "roadmap.md",
+      "chunk_index": 2
+    },
+    {
+      "source": "roadmap.md",
+      "chunk_index": 3
+    },
+    {
+      "source": "success_metrics.md",
+      "chunk_index": 0
+    },
+    {
+      "source": "success_metrics.md",
+      "chunk_index": 1
+    },
+    {
+      "source": "success_metrics.md",
+      "chunk_index": 2
+    },
+    {
+      "source": "success_metrics.md",
+      "chunk_index": 3
+    }
+  ]
+}

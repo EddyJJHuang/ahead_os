@@ -1,0 +1,11 @@
+rep_id,name,region_id,hire_date,quota_usd
+1,Ava Chen,4,2024-07-02,300000.0
+2,Liam Patel,2,2022-07-25,250000.0
+3,Noah Kim,4,2024-06-28,500000.0
+4,Mia Garcia,2,2024-02-27,500000.0
+5,Ethan Brooks,1,2025-01-13,400000.0
+6,Sofia Rossi,2,2024-10-03,500000.0
+7,Lucas Meyer,5,2023-12-03,400000.0
+8,Emma Tanaka,1,2024-10-19,500000.0
+9,Oliver Smith,4,2023-02-25,400000.0
+10,Isabella Cruz,2,2022-06-08,500000.0

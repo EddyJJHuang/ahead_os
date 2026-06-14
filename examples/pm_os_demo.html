@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Local PM OS — reference UI</title>
+<style>
+  :root{--bg:#0d1117;--panel:#161b22;--line:#30363d;--fg:#e6edf3;--mut:#8b949e;--ok:#3fb950;--bad:#f85149;--warn:#d29922;--accent:#58a6ff}
+  *{box-sizing:border-box}body{margin:0;font:14px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--fg)}
+  header{display:flex;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line)}
+  header h1{font-size:16px;margin:0;margin-right:auto}
+  header input{background:var(--panel);border:1px solid var(--line);color:var(--fg);padding:6px 8px;border-radius:6px;width:230px}
+  #badge{font-size:12px;color:var(--mut)}
+  button{cursor:pointer;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--fg);padding:6px 12px}
+  button.primary{background:var(--accent);color:#04101f;border:0;font-weight:600}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;padding:14px}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;min-height:240px}
+  .panel h2{font-size:13px;text-transform:uppercase;letter-spacing:.5px;color:var(--mut);margin:0 0 10px}
+  .verdict{font-size:44px;font-weight:800;line-height:1}
+  .verdict.NO{color:var(--bad)}.verdict.YES{color:var(--ok)}
+  .kv{margin:8px 0;color:var(--mut)}.kv b{color:var(--fg)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid var(--line);margin:2px 4px 0 0;color:var(--mut)}
+  .sev-Critical{color:var(--bad);border-color:var(--bad)}.sev-High{color:var(--warn);border-color:var(--warn)}
+  .sev-Medium{color:var(--accent)}.sev-Low{color:var(--mut)}
+  .action{border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:8px 0}
+  .action .t{font-weight:600}.action .m{color:var(--mut);font-size:12px}
+  .chip{background:transparent;border:1px solid var(--line);color:var(--mut);border-radius:14px;padding:3px 9px;margin:3px 4px 0 0;font-size:12px}
+  .bubble{background:#0d1117;border:1px solid var(--line);border-radius:8px;padding:9px 11px;margin:7px 0;white-space:pre-wrap}
+  .step{font-size:12px;color:var(--mut);border-left:2px solid var(--accent);padding:2px 8px;margin:4px 0;white-space:pre-wrap}
+  .row{display:flex;gap:8px}.row input{flex:1}
+  details{margin:6px 0}summary{cursor:pointer;color:var(--accent)}
+  table{border-collapse:collapse;width:100%;font-size:12px;margin-top:6px}th,td{border:1px solid var(--line);padding:4px 7px;text-align:left;vertical-align:top}
+  pre{white-space:pre-wrap;background:#0d1117;border:1px solid var(--line);border-radius:6px;padding:8px;font-size:12px}
+  .ev{font-size:12px;color:var(--mut)}
+</style>
+</head>
+<body>
+<header>
+  <h1>🧭 Local PM OS</h1>
+  <button class="primary" onclick="runAnalysis()">▶ Run PM Analysis</button>
+  <input id="base" value="http://localhost:8100" title="API base URL" />
+  <span id="badge">checking…</span>
+</header>
+
+<div class="grid">
+  <!-- PANEL 1 -->
+  <section class="panel" id="p1">
+    <h2>① Executive Decision</h2>
+    <div id="exec"><span class="kv">Click <b>Run PM Analysis</b> to begin.</span></div>
+  </section>
+
+  <!-- PANEL 2 -->
+  <section class="panel" id="p2">
+    <h2>② Top Actions</h2>
+    <div id="actions"><span class="kv">—</span></div>
+  </section>
+
+  <!-- PANEL 3 -->
+  <section class="panel" id="p3">
+    <h2>③ Ask PM OS</h2>
+    <div class="row"><input id="q" type="text" placeholder="Can we ship Friday? What's blocking launch?" />
+      <button class="primary" onclick="ask()">Ask</button></div>
+    <div>
+      <button class="chip" onclick="setQ(this)">Can we ship Friday?</button>
+      <button class="chip" onclick="setQ(this)">What are the biggest risks?</button>
+      <button class="chip" onclick="setQ(this)">What is blocking launch?</button>
+      <button class="chip" onclick="setQ(this)">Draft a stakeholder update.</button>
+    </div>
+    <div id="chat"></div>
+  </section>
+
+  <!-- PANEL 4 -->
+  <section class="panel" id="p4">
+    <h2>④ Evidence Explorer</h2>
+    <div id="srcTabs"></div>
+    <div id="evidence"><span class="kv">Risks &amp; their evidence appear after analysis; click a source to browse raw records.</span></div>
+  </section>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const base=()=>$("base").value.replace(/\/$/,"");
+const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+async function poll(){try{const h=await(await fetch(base()+"/health")).json();
+  $("badge").textContent=`model ${h.model_id} · vLLM ${h.vllm?"✅":"⏳"} · tools ${h.mock?"✅":"⏳"}`;
+}catch{$("badge").textContent="backend unreachable"}}
+setInterval(poll,4000);poll();
+
+// ---------- Panel 1 + 2 + 4 : Run PM Analysis ----------
+async function runAnalysis(){
+  $("exec").innerHTML="<span class='kv'>Analyzing Jira · GitHub · Email · Calendar · Tasks · Docs …</span>";
+  $("actions").innerHTML="";$("evidence").innerHTML="";
+  let d;try{d=await(await fetch(base()+"/api/pm/analysis",{method:"POST"})).json();}
+  catch(e){$("exec").innerHTML="<span class='kv'>error: "+esc(e)+"</span>";return;}
+  const sr=d.ship_readiness,es=d.executive_summary;
+  $("exec").innerHTML=`
+    <div class="kv">SHIP READINESS</div>
+    <div class="verdict ${sr.decision}">${sr.decision}</div>
+    <div class="kv">Recommended: <b>${esc(sr.recommended_action)}</b></div>
+    <div class="kv">Risk level: <b class="sev-${sr.risk_level}">${sr.risk_level}</b> · Evidence: <b>${esc(sr.evidence_strength)}</b></div>
+    <div>${sr.based_on.map(x=>`<span class="pill">${esc(x)}</span>`).join("")}</div>
+    <div class="bubble">${esc(es.narrative)}</div>
+    <details><summary>What changed / What's blocked</summary>
+      <b>Changed:</b><ul>${es.what_changed.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>
+      <b>Blocked:</b><ul>${es.whats_blocked.map(x=>`<li>${esc(x)}</li>`).join("")}</ul></details>`;
+  // Panel 2
+  $("actions").innerHTML=d.actions.map((a,i)=>`
+    <div class="action">
+      <div class="t">${i+1}. ${esc(a.title)}</div>
+      <div class="m">Impact: ${esc(a.impact)} · Effort: ${esc(a.effort)} — ${esc(a.rationale)}</div>
+      <button onclick='genDraft(${i})'>✍ Generate Draft</button>
+      <div id="draft-${i}"></div>
+    </div>`).join("");
+  window._actions=d.actions;
+  // Panel 4: risks + evidence chains
+  $("evidence").innerHTML=`<b>Risks → evidence</b>`+d.risks.map(r=>`
+    <details><summary><span class="sev-${r.severity}">[${r.severity}]</span> ${esc(r.risk)}</summary>
+      <div class="ev">${r.evidence.map(e=>`<span class="pill">${esc(e.type)}:${esc(e.id)}</span> ${esc(e.title)}`).join("<br>")}</div>
+      <div class="ev"><i>Mitigation:</i> ${esc(r.mitigation)}</div></details>`).join("")
+    +`<div style="margin-top:10px"><b>Browse sources:</b> ${srcButtons()}</div>`;
+}
+
+async function genDraft(i){
+  const a=window._actions[i];const box=$("draft-"+i);box.innerHTML="<span class='kv'>drafting…</span>";
+  try{const d=await(await fetch(base()+"/api/pm/draft",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({kind:a.draft_kind,context:a.context})})).json();
+    box.innerHTML=`<pre>[${esc(d.kind)}]\n\n${esc(d.draft)}</pre>`;}
+  catch(e){box.innerHTML="<span class='kv'>error: "+esc(e)+"</span>";}
+}
+
+// ---------- Panel 4 : source explorer ----------
+const SOURCES=["jira","github","emails","slack","calendar","tasks"];
+const srcButtons=()=>SOURCES.map(s=>`<button class="chip" onclick="loadSource('${s}')">${s}</button>`).join("");
+$("srcTabs").innerHTML=srcButtons();
+async function loadSource(s){
+  $("evidence").innerHTML="<span class='kv'>loading "+s+"…</span>";
+  const d=await(await fetch(base()+"/api/pm/sources/"+s)).json();
+  const recs=d.records||[];const cols=recs.length?Object.keys(recs[0]).slice(0,5):[];
+  $("evidence").innerHTML=`<b>${esc(s)}</b> — ${d.count} records<table><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join("")}</tr>`+
+    recs.map(r=>`<tr>${cols.map(c=>`<td>${esc(typeof r[c]==="object"?JSON.stringify(r[c]):r[c])}</td>`).join("")}</tr>`).join("")+`</table>`;
+}
+
+// ---------- Panel 3 : Ask PM OS (streaming) ----------
+const history=[];const setQ=b=>$("q").value=b.textContent;
+async function ask(){
+  const text=$("q").value.trim();if(!text)return;$("q").value="";
+  history.push({role:"user",content:text});
+  add("bubble","🧑 "+esc(text));const bubble=add("bubble","🤖 ");let answer="";
+  try{
+    const res=await fetch(base()+"/api/pm/ask/stream",{method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({messages:history})});
+    const rd=res.body.getReader(),dec=new TextDecoder();let buf="";
+    for(;;){const{value,done}=await rd.read();if(done)break;
+      buf+=dec.decode(value,{stream:true});const frames=buf.split("\n\n");buf=frames.pop();
+      for(const f of frames){const line=f.split("\n").find(l=>l.startsWith("data:"));if(!line)continue;
+        const e=JSON.parse(line.slice(5).trim());
+        if(e.type==="token"){answer+=e.text;bubble.innerHTML="🤖 "+esc(answer);}
+        else if(e.type==="tool_call")add("step",`🔎 ${e.name}(${esc(JSON.stringify(e.args))})`);
+        else if(e.type==="tool_result")add("step",`↳ ${esc(JSON.stringify(e.result)).slice(0,160)}`);
+        else if(e.type==="error")add("step","⚠️ "+esc(e.message));}}
+  }catch(err){bubble.innerHTML+="  ⚠️ "+esc(err);}
+  if(answer)history.push({role:"assistant",content:answer});
+}
+function add(cls,html){const d=document.createElement("div");d.className=cls;d.innerHTML=html;$("chat").appendChild(d);d.scrollIntoView();return d;}
+</script>
+</body>
+</html>

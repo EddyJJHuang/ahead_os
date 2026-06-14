@@ -32,6 +32,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 import agent  # existing skeleton — reused, not modified
+import pm_agent  # Local PM OS triage agent (run_analysis / ask / generate_draft)
+import pm_tools  # Local PM OS read + generate tools
 
 app = FastAPI(
     title="Meridian Ops Agent API",
@@ -177,7 +179,7 @@ def _run_chat(messages: list[dict], max_rounds: int) -> tuple[str, list[dict]]:
     for _ in range(max_rounds):
         resp = agent.client.chat.completions.create(
             model=agent.MODEL_ID, messages=convo, tools=agent.TOOLS,
-            tool_choice="auto", max_tokens=2048,
+            tool_choice="auto", max_tokens=3072,
         )
         msg = resp.choices[0].message
         _am = msg.model_dump(exclude_none=True)
@@ -235,7 +237,7 @@ def _stream_chat(messages: list[dict], max_rounds: int) -> Iterable[str]:
         for _ in range(max_rounds):
             stream = agent.client.chat.completions.create(
                 model=agent.MODEL_ID, messages=convo, tools=agent.TOOLS,
-                tool_choice="auto", max_tokens=2048, stream=True,
+                tool_choice="auto", max_tokens=3072, stream=True,
             )
             content_parts: list[str] = []
             tool_acc: dict[int, dict] = {}
@@ -298,6 +300,84 @@ def api_chat_stream(req: ChatRequest):
     """Same as /api/chat but streams Server-Sent Events. See _stream_chat for event shapes."""
     gen = _stream_chat([m.model_dump() for m in req.messages], req.max_rounds)
     return StreamingResponse(gen, media_type="text/event-stream")
+
+
+# =========================================================================== #
+# LOCAL PM OS — the product. Four panels build on these endpoints.            #
+#   Panel 1 Executive Decision + Panel 4 Evidence  <- POST /api/pm/analysis   #
+#   Panel 2 Top Actions (Generate Draft)           <- POST /api/pm/draft      #
+#   Panel 3 Ask PM OS                               <- POST /api/pm/ask[/stream]#
+#   Panel 4 Evidence Explorer (raw sources)         <- GET  /api/pm/sources    #
+# =========================================================================== #
+class PMAskRequest(BaseModel):
+    messages: list[ChatMessage] = Field(..., description="Conversation so far (oldest first).")
+    max_rounds: int = 5
+
+
+class PMDraftRequest(BaseModel):
+    kind: str = Field(..., description="jira_comment | slack_update | decision_memo | stakeholder_email | followup_task")
+    context: str = Field(..., description="Evidence/summary the draft should be based on (e.g. an action's `context`).")
+
+
+@app.post("/api/pm/analysis", tags=["pm-os"])
+def pm_analysis():
+    """Run PM Analysis — the triage workflow. Returns ship-readiness, executive
+    summary, Go/No-Go criteria, ranked risks (with evidence chains) and top actions."""
+    return pm_agent.run_analysis()
+
+
+@app.post("/api/pm/ask", tags=["pm-os"])
+def pm_ask(req: PMAskRequest):
+    """Ask PM OS (Panel 3). Retrieves evidence via tools, then answers. Returns
+    {answer, trace} where trace is the ordered tool_call/tool_result evidence."""
+    return pm_agent.ask([m.model_dump() for m in req.messages], req.max_rounds)
+
+
+def _pm_stream(messages: list[dict], max_rounds: int = 1):
+    """Retrieve evidence (emit it as tool events) then stream the grounded answer."""
+    try:
+        question = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")
+        ev = pm_agent.retrieve_evidence(question)
+        for step in ev["trace"]:
+            yield _sse(step)  # retrieve_evidence + search_docs + state_snapshot events
+        convo = [
+            {"role": "system", "content": pm_agent.SYSTEM_PROMPT},
+            {"role": "system", "content": "Evidence retrieved for the current question — answer using ONLY this, and cite the IDs:\n\n" + ev["text"]},
+        ] + [m for m in messages if m.get("role") in ("user", "assistant")]
+        stream = agent.client.chat.completions.create(
+            model=agent.MODEL_ID, messages=convo, max_tokens=8192, stream=True)
+        for chunk in stream:
+            delta = chunk.choices[0].delta
+            if delta.content:
+                yield _sse({"type": "token", "text": delta.content})
+        yield _sse({"type": "done"})
+    except Exception as exc:
+        yield _sse({"type": "error", "message": f"{type(exc).__name__}: {exc}"})
+
+
+@app.post("/api/pm/ask/stream", tags=["pm-os"])
+def pm_ask_stream(req: PMAskRequest):
+    """Streaming Ask PM OS (SSE) — same events as /api/chat/stream plus tool evidence."""
+    return StreamingResponse(_pm_stream([m.model_dump() for m in req.messages], req.max_rounds),
+                             media_type="text/event-stream")
+
+
+@app.post("/api/pm/draft", tags=["pm-os"])
+def pm_draft(req: PMDraftRequest):
+    """Generate Draft (Panel 2 action buttons): {kind, draft}."""
+    return pm_agent.generate_draft(req.kind, req.context)
+
+
+@app.get("/api/pm/sources", tags=["pm-os"])
+def pm_sources():
+    """List the connected sources and record counts (Evidence Explorer)."""
+    return pm_tools.list_sources()
+
+
+@app.get("/api/pm/sources/{source}", tags=["pm-os"])
+def pm_source(source: str):
+    """Raw records for one source: jira|github|emails|slack|calendar|tasks (Evidence Explorer)."""
+    return pm_tools.get_source(source)
 
 
 if __name__ == "__main__":
