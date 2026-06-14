@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meridian Ops Agent — reference UI</title>
+<style>
+  :root { --bg:#0f1216; --panel:#171c23; --line:#2a323d; --fg:#e6edf3; --mut:#8b97a6; --accent:#3fb950; }
+  * { box-sizing:border-box; } body { margin:0; font:14px/1.5 system-ui,sans-serif; background:var(--bg); color:var(--fg); }
+  header { padding:10px 16px; border-bottom:1px solid var(--line); display:flex; gap:12px; align-items:center; }
+  header input { flex:1; background:var(--panel); border:1px solid var(--line); color:var(--fg); padding:6px 8px; border-radius:6px; }
+  #badge { font-size:12px; color:var(--mut); white-space:nowrap; }
+  .tabs { display:flex; gap:6px; padding:10px 16px 0; }
+  .tabs button { background:var(--panel); color:var(--fg); border:1px solid var(--line); padding:6px 14px; border-radius:6px 6px 0 0; cursor:pointer; }
+  .tabs button.active { border-bottom-color:var(--bg); color:var(--accent); }
+  .panel { display:none; padding:16px; } .panel.active { display:block; }
+  .row { display:flex; gap:8px; } .row input { flex:1; }
+  input[type=text]{ background:var(--panel); border:1px solid var(--line); color:var(--fg); padding:8px; border-radius:6px; }
+  button.go { background:var(--accent); color:#03210c; border:0; padding:8px 16px; border-radius:6px; cursor:pointer; font-weight:600; }
+  #log { margin-top:14px; }
+  .bubble { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin:8px 0; white-space:pre-wrap; }
+  .step { font-size:12px; color:var(--mut); border-left:2px solid var(--accent); padding:2px 8px; margin:4px 0; white-space:pre-wrap; }
+  table { border-collapse:collapse; margin-top:10px; width:100%; } th,td { border:1px solid var(--line); padding:6px 9px; text-align:left; }
+  th { background:var(--panel); } .chips button { background:var(--panel); color:var(--mut); border:1px solid var(--line); border-radius:14px; padding:4px 10px; margin:4px 4px 0 0; cursor:pointer; font-size:12px; }
+  code { color:var(--accent); }
+</style>
+</head>
+<body>
+<header>
+  <strong>Meridian Ops Agent</strong>
+  <input id="base" value="http://localhost:8100" title="API base URL" />
+  <span id="badge">checking…</span>
+</header>
+
+<div class="tabs">
+  <button data-tab="chat" class="active">Chat</button>
+  <button data-tab="sql">Ask the data</button>
+  <button data-tab="rag">Knowledge search</button>
+</div>
+
+<!-- CHAT -->
+<section class="panel active" id="chat">
+  <div class="row"><input id="chatInput" type="text" placeholder="Hi, I'm Alice (alice@meridian.com). My VPN throws VPN-503." /><button class="go" onclick="sendChat()">Send</button></div>
+  <div class="chips">
+    <button onclick="setChat(this)">Hi, I'm Alice (alice@meridian.com). My VPN throws error VPN-503, can you help?</button>
+    <button onclick="setChat(this)">File a P2 network ticket for me and tell me the ticket id.</button>
+  </div>
+  <div id="log"></div>
+</section>
+
+<!-- SQL -->
+<section class="panel" id="sql">
+  <div class="row"><input id="sqlInput" type="text" placeholder="Top 5 products by completed revenue in 2025" /><button class="go" onclick="runSql()">Ask</button></div>
+  <div class="chips">
+    <button onclick="setSql(this)">What were our top 5 products by completed revenue in 2025?</button>
+    <button onclick="setSql(this)">Show monthly revenue trend for the last 12 months.</button>
+    <button onclick="setSql(this)">Average CSAT by ticket priority.</button>
+  </div>
+  <div id="sqlOut"></div>
+</section>
+
+<!-- RAG -->
+<section class="panel" id="rag">
+  <div class="row"><input id="ragInput" type="text" placeholder="How do I fix VPN error VPN-503?" /><button class="go" onclick="runRag()">Search</button></div>
+  <div id="ragOut"></div>
+</section>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const base = () => $("base").value.replace(/\/$/, "");
+const esc = (s) => String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+// tabs
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(x => x.classList.remove("active"));
+  b.classList.add("active"); $(b.dataset.tab).classList.add("active");
+});
+const setChat = (b) => $("chatInput").value = b.textContent;
+const setSql  = (b) => $("sqlInput").value  = b.textContent;
+
+// health badge
+async function poll() {
+  try { const h = await (await fetch(base() + "/health")).json();
+    $("badge").textContent = `model: ${h.model_id} · vLLM ${h.vllm ? "✅" : "⏳"} · tools ${h.mock ? "✅" : "⏳"}`;
+  } catch { $("badge").textContent = "backend unreachable"; }
+}
+setInterval(poll, 4000); poll();
+
+// --- CHAT (streaming SSE via fetch + ReadableStream) ---
+const history = [];
+async function sendChat() {
+  const text = $("chatInput").value.trim(); if (!text) return;
+  $("chatInput").value = "";
+  history.push({ role: "user", content: text });
+  add("bubble", "🧑 " + esc(text));
+  const bubble = add("bubble", "🤖 ");
+  let answer = "";
+  try {
+    const res = await fetch(base() + "/api/chat/stream", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: history })
+    });
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = "";
+    for (;;) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      const frames = buf.split("\n\n"); buf = frames.pop();
+      for (const f of frames) {
+        const line = f.split("\n").find(l => l.startsWith("data:")); if (!line) continue;
+        const e = JSON.parse(line.slice(5).trim());
+        if (e.type === "token") { answer += e.text; bubble.innerHTML = "🤖 " + esc(answer); }
+        else if (e.type === "tool_call")   add("step", `🔧 ${e.name}(${esc(JSON.stringify(e.args))})`);
+        else if (e.type === "tool_result") add("step", `↳ ${esc(JSON.stringify(e.result))}`);
+        else if (e.type === "error")       add("step", "⚠️ " + esc(e.message));
+      }
+    }
+  } catch (err) { bubble.innerHTML += "  ⚠️ " + esc(err); }
+  if (answer) history.push({ role: "assistant", content: answer });
+}
+function add(cls, html) { const d = document.createElement("div"); d.className = cls; d.innerHTML = html; $("log").appendChild(d); d.scrollIntoView(); return d; }
+
+// --- SQL ---
+async function runSql() {
+  const question = $("sqlInput").value.trim(); if (!question) return;
+  $("sqlOut").innerHTML = "running…";
+  const r = await (await fetch(base() + "/api/sql", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ question }) })).json();
+  if (r.error) { $("sqlOut").innerHTML = `<div class="step">⚠️ ${esc(r.error)}</div><pre class="bubble">${esc(r.raw||"")}</pre>`; return; }
+  let html = `<details class="bubble"><summary>view SQL</summary><pre>${esc(r.sql)}</pre></details><table><tr>${r.columns.map(c=>`<th>${esc(c)}</th>`).join("")}</tr>`;
+  html += r.rows.map(row => `<tr>${row.map(c=>`<td>${esc(c)}</td>`).join("")}</tr>`).join("") + "</table>";
+  $("sqlOut").innerHTML = html;
+}
+
+// --- RAG ---
+async function runRag() {
+  const query = $("ragInput").value.trim(); if (!query) return;
+  $("ragOut").innerHTML = "searching…";
+  const r = await (await fetch(base() + "/api/rag", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({ query }) })).json();
+  $("ragOut").innerHTML = r.hits.map(h => h.error
+    ? `<div class="step">⚠️ ${esc(h.error)}</div>`
+    : `<div class="bubble"><b>#${h.rank} ${esc(h.source)}</b> <span style="color:var(--mut)">score ${h.score?.toFixed(3)}</span><br>${esc(h.text)}</div>`).join("");
+}
+</script>
+</body>
+</html>
