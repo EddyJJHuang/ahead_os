@@ -10,6 +10,10 @@ mock_data/**/*.db
 mock_data/**/*.sqlite*
 # runtime / logs / caches
 *.log
+logs/
 __pycache__/
 *.pyc
 .DS_Store
+.ahead_os_upstream/
+frontend/node_modules/
+frontend/dist/

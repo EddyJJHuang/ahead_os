@@ -60,6 +60,18 @@ curl http://localhost:8100/api/pm/sources   # sanity check
 ```
 Frontend teammates point their app at `http://<GB10_LAN_IP>:8100` (`hostname -I`).
 
+### React dashboard (this repo)
+
+A 4-panel **Local PM OS** web UI lives in `frontend/`. Quick start:
+
+```bash
+bash serve.sh          # backend :8100
+./web.sh               # Vite dev server :5173
+# remote GB10: VITE_API_URL=http://<GB10_LAN_IP>:8100 ./web.sh
+```
+
+See [`START_HERE.md`](START_HERE.md) for panel details. The UI uses `:8100` chat/RAG today with demo fallbacks; wire-up to `/api/pm/*` is documented in [`FRONTEND.md`](FRONTEND.md).
+
 ## Demo scenario
 **Enterprise Checkout launch** (target Fri 2026-06-19). The data encodes a launch-at-risk story: 3 open P0
 payment bugs, an unreviewed launch PR (PR-88), an escalating enterprise customer (Globex / Amex), no QA review
