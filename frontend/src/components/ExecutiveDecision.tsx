@@ -30,9 +30,15 @@ export default function ExecutiveDecision({
         <div className="verdict-row">
           <span className="verdict-row__label">Ship Readiness</span>
           <span
-            className={`verdict-row__value ${data.ship_readiness === "NO" ? "verdict-row__value--no" : ""}`}
+            className={`verdict-row__value ${
+              data.ship_readiness === "NO"
+                ? "verdict-row__value--no"
+                : data.ship_readiness === "YES"
+                  ? "verdict-row__value--yes"
+                  : ""
+            }`}
           >
-            {data.ship_readiness}
+            {data.ship_readiness === "YES" ? "Ready" : data.ship_readiness}
           </span>
         </div>
 

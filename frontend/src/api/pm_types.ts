@@ -235,3 +235,38 @@ export interface CreateAutonomyTaskResponse {
   latest_suggestion: AutonomySuggestion | null;
   runtime: NemoClawRuntimeStatus;
 }
+
+export interface DemoContextItem {
+  id: string;
+  source: string;
+  title: string;
+  snippet: string;
+  detail: string;
+  severity: "critical" | "high" | "medium" | "low";
+  origin: "live" | "demo";
+}
+
+export interface DemoStatusResponse {
+  emergency_active: boolean;
+  pending_peacetime_signals: number;
+  ingested_peacetime_signals: number;
+}
+
+export interface DemoIngestResponse {
+  ingested: boolean;
+  reason?: string;
+  signal?: {
+    source: string;
+    record_key: string;
+    record: Record<string, unknown>;
+    context_item: DemoContextItem;
+    remaining: number;
+  } | null;
+  status: DemoStatusResponse;
+}
+
+export interface EmergencyToggleResponse {
+  emergency_active: boolean;
+  suggestion?: AutonomySuggestion;
+  runtime?: NemoClawRuntimeStatus;
+}

@@ -1,3 +1,43 @@
 {
-  "issues": []
+  "project": "Enterprise Checkout",
+  "key": "CHK",
+  "as_of": "2026-06-14",
+  "issues": [
+    {
+      "id": "CHK-120",
+      "title": "Amex payment capture verified on staging",
+      "priority": "P1",
+      "status": "Done",
+      "component": "payments"
+    },
+    {
+      "id": "CHK-090",
+      "title": "Cart total flickers on quantity change",
+      "priority": "P1",
+      "status": "Done",
+      "component": "checkout/ui"
+    },
+    {
+      "id": "CHK-082",
+      "title": "Saved payment methods for returning buyers",
+      "priority": "P2",
+      "status": "Done",
+      "component": "checkout"
+    },
+    {
+      "id": "CHK-115",
+      "title": "Add PO billing validation for enterprise seats",
+      "priority": "P2",
+      "status": "In Review",
+      "component": "checkout"
+    },
+    {
+      "id": "CHK-104",
+      "title": "Add Amex to automated payment regression suite",
+      "priority": "P2",
+      "status": "Closed",
+      "component": "qa",
+      "_ingest_pending": true
+    }
+  ]
 }

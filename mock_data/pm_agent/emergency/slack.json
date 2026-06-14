@@ -1,3 +1,19 @@
 {
-  "messages": []
+  "as_of": "2026-06-14",
+  "messages": [
+    {
+      "id": "SL-900",
+      "channel": "#launch",
+      "from": "sarah",
+      "text": "URGENT: Amex checkout regression detected on staging — QA pass may need to be reopened.",
+      "ts": "2026-06-14T14:05:00"
+    },
+    {
+      "id": "SL-901",
+      "channel": "#incidents",
+      "from": "alex",
+      "text": "Globex escalation on thread TH-GLOBEX-77 — need PM response today.",
+      "ts": "2026-06-14T14:12:00"
+    }
+  ]
 }

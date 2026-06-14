@@ -69,6 +69,7 @@ interface AskPMOSProps {
   modelReady: boolean;
   usingMockPanels: boolean;
   onTaskCreated?: () => void;
+  externalActivities?: ActivityFeedItem[];
 }
 
 export default function AskPMOS({
@@ -76,6 +77,7 @@ export default function AskPMOS({
   modelReady,
   usingMockPanels,
   onTaskCreated,
+  externalActivities = [],
 }: AskPMOSProps) {
   const [input, setInput] = useState("");
   const [history, setHistory] = useState<ChatMessage[]>([]);
@@ -177,13 +179,12 @@ export default function AskPMOS({
     }
   }, [proposal, appendActivity, onTaskCreated]);
 
-  const feedItems = useMemo(
-    () =>
-      liveActivities.length > 0
-        ? [...liveActivities, ...DEMO_ACTIVITY_FEED]
-        : DEMO_ACTIVITY_FEED,
-    [liveActivities]
-  );
+  const feedItems = useMemo(() => {
+    const live = [...externalActivities, ...liveActivities];
+    return live.length > 0
+      ? [...live, ...DEMO_ACTIVITY_FEED]
+      : DEMO_ACTIVITY_FEED;
+  }, [externalActivities, liveActivities]);
 
   const offlineFallback = useCallback((question: string): string => {
     const key = question.toLowerCase();
@@ -400,8 +401,8 @@ export default function AskPMOS({
 
       <AgentActivityFeed
         items={feedItems}
-        showLiveBadge={liveActivities.length > 0}
-        showDemoBadge={liveActivities.length === 0}
+        showLiveBadge={externalActivities.length > 0 || liveActivities.length > 0}
+        showDemoBadge={externalActivities.length === 0 && liveActivities.length === 0}
         maxItems={5}
         compact
       />

@@ -1,3 +1,39 @@
 {
-  "tasks": []
+  "as_of": "2026-06-14",
+  "checklist": "Enterprise Checkout Launch",
+  "tasks": [
+    {
+      "id": "TASK-2",
+      "title": "QA sign-off on Enterprise Checkout",
+      "status": "done"
+    },
+    {
+      "id": "TASK-4",
+      "title": "Send stakeholder launch update",
+      "status": "done"
+    },
+    {
+      "id": "TASK-5",
+      "title": "Finalize rollback runbook",
+      "status": "done"
+    },
+    {
+      "id": "TASK-6",
+      "title": "Complete checkout regression checklist",
+      "status": "done",
+      "_ingest_pending": true
+    },
+    {
+      "id": "TASK-7",
+      "title": "Approve launch documentation pack",
+      "status": "done",
+      "_ingest_pending": true
+    },
+    {
+      "id": "TASK-8",
+      "title": "Approve stakeholder comms template",
+      "status": "done",
+      "_ingest_pending": true
+    }
+  ]
 }

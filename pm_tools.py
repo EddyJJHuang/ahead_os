@@ -67,6 +67,145 @@ def set_emergency(active: bool) -> bool:
     return emergency_active()
 
 
+INGEST_STATE = PM_DIR / ".peacetime_ingested.json"
+
+
+def _strip_demo_meta(rec: dict) -> dict:
+    return {k: v for k, v in rec.items() if not str(k).startswith("_")}
+
+
+def _record_key(source: str, rec: dict) -> str:
+    if source == "github":
+        return f"github:PR-{rec.get('number')}"
+    rid = rec.get("id")
+    if rid is None:
+        rid = rec.get("number", "unknown")
+    return f"{source}:{rid}"
+
+
+def _load_ingested_ids() -> set[str]:
+    if not INGEST_STATE.exists():
+        return set()
+    try:
+        data = json.loads(INGEST_STATE.read_text(encoding="utf-8"))
+        revealed = data.get("revealed", [])
+        return set(revealed if isinstance(revealed, list) else [])
+    except Exception:
+        return set()
+
+
+def _save_ingested_ids(ids: set[str]) -> None:
+    INGEST_STATE.write_text(
+        json.dumps({"revealed": sorted(ids)}, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+
+def reset_peacetime_ingest() -> None:
+    if INGEST_STATE.exists():
+        INGEST_STATE.unlink()
+
+
+def _filter_peacetime_records(source: str, recs: list[dict]) -> list[dict]:
+    if not PEACE_DIR.exists():
+        return [_strip_demo_meta(r) for r in recs]
+    revealed = _load_ingested_ids()
+    out: list[dict] = []
+    for rec in recs:
+        if rec.get("_ingest_pending"):
+            if _record_key(source, rec) not in revealed:
+                continue
+        out.append(_strip_demo_meta(rec))
+    return out
+
+
+def list_pending_peacetime_signals() -> list[dict[str, Any]]:
+    if not PEACE_DIR.exists():
+        return []
+    revealed = _load_ingested_ids()
+    pending: list[dict[str, Any]] = []
+    for source in _SOURCES:
+        fname, key = _SOURCES[source]
+        recs, _ = _read_records(PEACE_DIR, fname, key)
+        for rec in recs:
+            if not rec.get("_ingest_pending"):
+                continue
+            rk = _record_key(source, rec)
+            if rk in revealed:
+                continue
+            pending.append({
+                "source": source,
+                "record_key": rk,
+                "record": _strip_demo_meta(rec),
+            })
+    return pending
+
+
+def record_to_context_item(source: str, rec: dict) -> dict[str, Any]:
+    labels = {
+        "jira": "Jira",
+        "github": "GitHub",
+        "emails": "Email",
+        "slack": "Slack",
+        "calendar": "Calendar",
+        "tasks": "Tasks",
+    }
+    if source == "github":
+        title = f"PR-{rec.get('number')} — {rec.get('title', 'Pull request')}"
+        snippet = f"Status: {rec.get('status', 'unknown')}"
+    elif source == "emails":
+        title = f"{rec.get('id', 'email')} — {rec.get('subject', 'Message')}"
+        snippet = f"From: {rec.get('from', 'unknown')}"
+    elif source == "slack":
+        title = f"{rec.get('id', 'slack')} — #{rec.get('channel', 'channel').lstrip('#')}"
+        snippet = rec.get("text", "")
+    elif source == "calendar":
+        title = f"{rec.get('id', 'event')} — {rec.get('title', 'Event')}"
+        snippet = f"Scheduled: {rec.get('date', 'TBD')}"
+    elif source == "tasks":
+        title = f"{rec.get('id', 'task')} — {rec.get('title', 'Task')}"
+        snippet = f"Status: {rec.get('status', 'unknown')}"
+    else:
+        title = f"{rec.get('id', 'item')} — {rec.get('title', 'Issue')}"
+        snippet = f"Priority: {rec.get('priority', 'n/a')} · Status: {rec.get('status', 'n/a')}"
+    return {
+        "id": _record_key(source, rec),
+        "source": labels.get(source, source.title()),
+        "title": title,
+        "snippet": snippet,
+        "detail": json.dumps(rec, ensure_ascii=False, indent=2),
+        "severity": "low",
+        "origin": "live",
+    }
+
+
+def ingest_next_peacetime_signal() -> dict[str, Any] | None:
+    import random
+
+    pending = list_pending_peacetime_signals()
+    if not pending:
+        return None
+    pick = random.choice(pending)
+    revealed = _load_ingested_ids()
+    revealed.add(pick["record_key"])
+    _save_ingested_ids(revealed)
+    return {
+        "source": pick["source"],
+        "record_key": pick["record_key"],
+        "record": pick["record"],
+        "context_item": record_to_context_item(pick["source"], pick["record"]),
+        "remaining": len(pending) - 1,
+    }
+
+
+def demo_status() -> dict[str, Any]:
+    return {
+        "emergency_active": emergency_active(),
+        "pending_peacetime_signals": len(list_pending_peacetime_signals()),
+        "ingested_peacetime_signals": len(_load_ingested_ids()),
+    }
+
+
 def _read_records(dirpath: Path, fname: str, key: str) -> tuple[list[dict], dict]:
     path = dirpath / fname
     if not path.exists():
@@ -79,9 +218,10 @@ def _load(source: str) -> tuple[list[dict], dict]:
     fname, key = _SOURCES[source]
     base = PEACE_DIR if PEACE_DIR.exists() else PM_DIR  # peacetime layout, else flat
     recs, meta = _read_records(base, fname, key)
+    recs = _filter_peacetime_records(source, recs)
     if emergency_active():
         erecs, _ = _read_records(EMERGENCY_DIR, fname, key)
-        recs = recs + erecs
+        recs = recs + [_strip_demo_meta(r) for r in erecs]
     return recs, meta
 
 

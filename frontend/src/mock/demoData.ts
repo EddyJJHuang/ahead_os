@@ -11,14 +11,14 @@ import type {
 } from "../types";
 
 export const DEMO_EXECUTIVE: ExecutiveDecisionData = {
-  headline: "Can we ship Friday?",
-  ship_readiness: "NO",
-  recommendation: "Delay launch 2 days",
-  risk_level: "Critical",
+  headline: "Enterprise Checkout launch is ON TRACK",
+  ship_readiness: "YES",
+  recommendation: "Proceed with 2026-06-19 launch",
+  risk_level: "Low",
   evidence_strength: "Strong",
-  evidence_sources: ["Jira", "GitHub", "Email", "Calendar"],
+  evidence_sources: ["Jira", "GitHub", "Email", "Calendar", "Tasks", "Docs"],
   summary:
-    "No — 2 open P0 payment bugs (CHK-101 Amex failure, CHK-102 double-charge), an unreviewed launch PR-88, and no scheduled QA sign-off block the launch. Recommend slipping to 2026-06-23.",
+    "Yes — QA sign-off is complete, launch PRs are merged, stakeholder comms are sent, and no open P0 bugs block the Enterprise Checkout launch on 2026-06-19.",
 };
 
 export const DEMO_ACTIONS: ActionItem[] = [

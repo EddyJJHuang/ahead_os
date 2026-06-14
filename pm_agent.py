@@ -43,7 +43,11 @@ def gather_signals() -> dict:
     unreviewed_prs = [p for p in blocking_prs if not p.get("approvals")]
     escalations = [e for e in emails if e.get("escalation")]
     qa_events = [e for e in events if "qa" in (e.get("title", "").lower())]
-    qa_task = next((t for t in tasks if "qa sign-off" in t.get("title", "").lower()), None)
+    qa_matches = [t for t in tasks if "qa sign-off" in t.get("title", "").lower()]
+    if T.emergency_active() and len(qa_matches) > 1:
+        qa_task = qa_matches[-1]
+    else:
+        qa_task = qa_matches[0] if qa_matches else None
     comms_task = next((t for t in tasks if "stakeholder" in t.get("title", "").lower()), None)
     incomplete_tasks = [t for t in tasks if t.get("status") != "done"]
     return {

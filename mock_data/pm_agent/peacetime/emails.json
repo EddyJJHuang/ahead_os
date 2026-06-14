@@ -1,3 +1,34 @@
 {
-  "messages": []
+  "as_of": "2026-06-14",
+  "messages": [
+    {
+      "id": "EM-1001",
+      "subject": "Enterprise Checkout — launch readiness looks good",
+      "from": "dana@meridian.com",
+      "account": "internal",
+      "escalation": false,
+      "thread_id": "TH-INTERNAL-01",
+      "links": { "jira": ["CHK-120"] }
+    },
+    {
+      "id": "EM-1002",
+      "subject": "RE: Enterprise Checkout pilot feedback — great experience",
+      "from": "cto@acmecorp.com",
+      "account": "Acme Corp (Enterprise, $320k ARR)",
+      "escalation": false,
+      "thread_id": "TH-ACME-01",
+      "links": {},
+      "_ingest_pending": true
+    },
+    {
+      "id": "EM-1003",
+      "subject": "Weekly Engineering Digest — checkout team highlights",
+      "from": "newsletter@meridian.com",
+      "account": "internal",
+      "escalation": false,
+      "thread_id": "TH-WEEKLY",
+      "links": {},
+      "_ingest_pending": true
+    }
+  ]
 }

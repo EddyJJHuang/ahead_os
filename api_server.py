@@ -454,6 +454,42 @@ def pm_emergency_toggle(req: PMEmergencyToggle):
     }
 
 
+@app.get("/api/pm/demo/status", tags=["pm-demo"])
+def pm_demo_status():
+    """Peacetime ingest + emergency overlay state for the live demo."""
+    return pm_tools.demo_status()
+
+
+@app.post("/api/pm/demo/ingest", tags=["pm-demo"])
+def pm_demo_ingest():
+    """Reveal one random pending peacetime signal and re-run the monitor."""
+    if pm_tools.emergency_active():
+        return {
+            "ingested": False,
+            "reason": "emergency_active",
+            "status": pm_tools.demo_status(),
+        }
+    signal = pm_tools.ingest_next_peacetime_signal()
+    monitor = None
+    if signal:
+        monitor = pm_autonomy.run_monitor(trigger="peacetime_ingest")
+    return {
+        "ingested": bool(signal),
+        "signal": signal,
+        "monitor": monitor,
+        "status": pm_tools.demo_status(),
+    }
+
+
+@app.post("/api/pm/demo/reset", tags=["pm-demo"])
+def pm_demo_reset():
+    """Reset peacetime ingest progress and turn off the emergency overlay."""
+    pm_tools.reset_peacetime_ingest()
+    pm_tools.set_emergency(False)
+    pm_autonomy.run_monitor(trigger="recovery")
+    return {"ok": True, "status": pm_tools.demo_status()}
+
+
 @app.get("/api/pm/autonomy/tasks", tags=["pm-autonomy"])
 def pm_autonomy_tasks():
     """List autonomous PM tasks registered from natural language or defaults."""

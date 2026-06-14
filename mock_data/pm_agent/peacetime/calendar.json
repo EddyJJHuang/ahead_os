@@ -1,3 +1,30 @@
 {
-  "events": []
+  "as_of": "2026-06-14",
+  "events": [
+    {
+      "id": "EV-1",
+      "title": "Enterprise Checkout — Launch Go/No-Go",
+      "type": "review",
+      "date": "2026-06-18"
+    },
+    {
+      "id": "EV-2",
+      "title": "Enterprise Checkout — Launch",
+      "type": "launch",
+      "date": "2026-06-19"
+    },
+    {
+      "id": "EV-3",
+      "title": "Enterprise Checkout QA Review",
+      "type": "qa",
+      "date": "2026-06-16"
+    },
+    {
+      "id": "EV-4",
+      "title": "Launch readiness review with VP Product",
+      "type": "review",
+      "date": "2026-06-17",
+      "_ingest_pending": true
+    }
+  ]
 }

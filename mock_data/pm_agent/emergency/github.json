@@ -1,3 +1,16 @@
 {
-  "pull_requests": []
+  "repo": "meridian/checkout-service",
+  "as_of": "2026-06-14",
+  "pull_requests": [
+    {
+      "number": 88,
+      "title": "Enterprise Checkout v2 flow (multi-seat, PO billing)",
+      "status": "open",
+      "blocking_launch": true,
+      "approvals": [],
+      "days_open": 5,
+      "requested_reviewers": ["alex-kim@meridian.com"],
+      "linked_jira": ["CHK-110"]
+    }
+  ]
 }

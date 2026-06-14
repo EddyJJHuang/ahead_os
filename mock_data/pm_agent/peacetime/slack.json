@@ -1,3 +1,36 @@
 {
-  "messages": []
+  "as_of": "2026-06-14",
+  "messages": [
+    {
+      "id": "SL-100",
+      "channel": "#launch",
+      "from": "dana",
+      "text": "Launch checklist is green — targeting 2026-06-19.",
+      "ts": "2026-06-14T08:30:00"
+    },
+    {
+      "id": "SL-101",
+      "channel": "#checkout",
+      "from": "sarah",
+      "text": "Sprint 24 milestone complete — regression suite passed on staging.",
+      "ts": "2026-06-14T09:15:00",
+      "_ingest_pending": true
+    },
+    {
+      "id": "SL-102",
+      "channel": "#launch",
+      "from": "mike",
+      "text": "QA team signed off on Enterprise Checkout flows. Nice work everyone.",
+      "ts": "2026-06-14T10:00:00",
+      "_ingest_pending": true
+    },
+    {
+      "id": "SL-103",
+      "channel": "#product",
+      "from": "raj",
+      "text": "Docs approved for enterprise checkout rollout — linking in launch brief.",
+      "ts": "2026-06-14T11:20:00",
+      "_ingest_pending": true
+    }
+  ]
 }

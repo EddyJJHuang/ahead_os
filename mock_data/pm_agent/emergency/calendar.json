@@ -1,3 +1,11 @@
 {
-  "events": []
+  "as_of": "2026-06-14",
+  "events": [
+    {
+      "id": "EV-900",
+      "title": "Emergency checkout war room",
+      "type": "incident",
+      "date": "2026-06-14"
+    }
+  ]
 }

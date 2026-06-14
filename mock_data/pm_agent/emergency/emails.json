@@ -1,3 +1,14 @@
 {
-  "messages": []
+  "as_of": "2026-06-14",
+  "messages": [
+    {
+      "id": "EM-2001",
+      "subject": "RE: Checkout still failing for our team — third report",
+      "from": "vp-ops@globex.com",
+      "account": "Globex (Enterprise, $480k ARR)",
+      "escalation": true,
+      "thread_id": "TH-GLOBEX-77",
+      "links": { "jira": ["CHK-101"] }
+    }
+  ]
 }

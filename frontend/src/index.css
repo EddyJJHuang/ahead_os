@@ -1259,6 +1259,10 @@ textarea {
   color: #dc2626;
 }
 
+.verdict-row__value--yes {
+  color: #2e9e6b;
+}
+
 .verdict-row__value--critical {
   color: #ca8a04;
 }
@@ -1312,6 +1316,29 @@ textarea {
 }
 
 /* Top-nav right cluster + Scheduled Tasks pill */
+.demo-emergency-trigger {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  border-radius: 50%;
+  background: rgba(220, 38, 38, 0.08);
+  cursor: pointer;
+  opacity: 0.35;
+  transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+
+.demo-emergency-trigger:hover:not(:disabled) {
+  opacity: 0.85;
+  transform: scale(1.08);
+  box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.08);
+}
+
+.demo-emergency-trigger:disabled {
+  cursor: default;
+  opacity: 0.15;
+}
+
 .top-nav__right {
   display: flex;
   align-items: center;

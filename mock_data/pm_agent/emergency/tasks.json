@@ -1,3 +1,20 @@
 {
-  "tasks": []
+  "as_of": "2026-06-14",
+  "tasks": [
+    {
+      "id": "TASK-EM-QA",
+      "title": "QA sign-off on Enterprise Checkout",
+      "status": "not_started"
+    },
+    {
+      "id": "TASK-EM-1",
+      "title": "Resolve all open P0 checkout bugs",
+      "status": "in_progress"
+    },
+    {
+      "id": "TASK-EM-3",
+      "title": "Merge PR-88 (Enterprise Checkout v2)",
+      "status": "blocked"
+    }
+  ]
 }

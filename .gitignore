@@ -9,6 +9,8 @@ repos.tar.gz
 mock_data/**/*.db
 mock_data/**/*.sqlite*
 mock_data/pm_agent/live/
+mock_data/pm_agent/.emergency_active
+mock_data/pm_agent/.peacetime_ingested.json
 credentials.json
 token.json
 .env.local

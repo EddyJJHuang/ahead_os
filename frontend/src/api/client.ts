@@ -14,6 +14,9 @@ import type {
   SourceResponse,
   TaskPreview,
   AutonomyTask,
+  DemoIngestResponse,
+  DemoStatusResponse,
+  EmergencyToggleResponse,
 } from "./pm_types";
 import type { ConfigResponse, HealthResponse } from "./types";
 
@@ -125,6 +128,30 @@ export async function getPmSource(
   source: SourceName
 ): Promise<SourceResponse | null> {
   return fetchJSON<SourceResponse>(`/api/pm/sources/${source}`);
+}
+
+export async function getPmDemoStatus(): Promise<DemoStatusResponse | null> {
+  return fetchJSON<DemoStatusResponse>("/api/pm/demo/status");
+}
+
+export async function postPmDemoIngest(): Promise<DemoIngestResponse | null> {
+  return fetchJSON<DemoIngestResponse>("/api/pm/demo/ingest", {
+    method: "POST",
+    body: JSON.stringify({}),
+  });
+}
+
+export async function getPmEmergencyStatus(): Promise<{ emergency_active: boolean } | null> {
+  return fetchJSON<{ emergency_active: boolean }>("/api/pm/autonomy/emergency");
+}
+
+export async function postPmEmergencyToggle(
+  active: boolean
+): Promise<EmergencyToggleResponse | null> {
+  return fetchJSON<EmergencyToggleResponse>("/api/pm/autonomy/emergency", {
+    method: "POST",
+    body: JSON.stringify({ active }),
+  });
 }
 
 /** Stream PM ask via SSE (fetch + ReadableStream). */

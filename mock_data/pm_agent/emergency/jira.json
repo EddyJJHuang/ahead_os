@@ -1,3 +1,28 @@
 {
-  "issues": []
+  "project": "Enterprise Checkout",
+  "key": "CHK",
+  "as_of": "2026-06-14",
+  "issues": [
+    {
+      "id": "CHK-101",
+      "title": "Checkout fails for Amex cards (HTTP 500 at payment capture)",
+      "priority": "P0",
+      "status": "Open",
+      "component": "payments"
+    },
+    {
+      "id": "CHK-102",
+      "title": "Double-charge when customer retries a failed payment",
+      "priority": "P0",
+      "status": "Open",
+      "component": "payments"
+    },
+    {
+      "id": "CHK-103",
+      "title": "EU VAT miscalculated for multi-currency carts",
+      "priority": "P0",
+      "status": "In Progress",
+      "component": "checkout/tax"
+    }
+  ]
 }
