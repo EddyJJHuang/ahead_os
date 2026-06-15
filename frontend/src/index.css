@@ -123,7 +123,7 @@ textarea {
 }
 
 .top-nav__logo-img {
-  height: 28px;
+  height: calc(28px * 2.2);
   width: auto;
   display: block;
 }
